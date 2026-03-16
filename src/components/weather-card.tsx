@@ -60,7 +60,7 @@ export function WeatherCard({
             {label}
           </p>
           <div className="flex items-baseline gap-1">
-            <h3 className="text-3xl font-bold tracking-tight">
+            <h3 className="text-2xl font-bold tracking-tight text-white">
               {value}
             </h3>
             {unit && <span className="text-sm font-medium opacity-60">{unit}</span>}

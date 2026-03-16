@@ -1,3 +1,4 @@
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google"
 
 import "./globals.css"
@@ -16,6 +17,20 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: "Bảng điều khiển | Weather Intelligence",
+  description: "Bảng điều khiển theo dõi trạm thông tin thời tiết thời gian thực và dự báo.",
+  icons: {
+    icon: "/favicon.ico",
+  },
+}
+export const viewport: Viewport = {
+  themeColor: "#050505",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export default function RootLayout({
   children,

@@ -1,8 +1,8 @@
 "use client";
 
 import { ConditionIcon } from "./ConditionIcon";
-import { conditionNames } from "./WeatherHeader";
-import { DailyWeather } from "@/lib/weather-data";
+import { DailyWeather, conditionNames } from "@/lib/weather-data";
+import { formatWeatherValue } from "@/lib/utils";
 
 interface DailyForecastProps {
   data: DailyWeather[];
@@ -22,21 +22,21 @@ export function DailyForecast({ data }: DailyForecastProps) {
                   {conditionNames[day.condition] || day.condition}
                 </span>
               </div>
-              <div className="p-1.5 bg-white/5 rounded-lg group-hover:bg-blue-500/20 transition-colors">
-                <ConditionIcon condition={day.condition} className="w-4 h-4 text-blue-400" />
+              <div className="p-2 bg-white/5 rounded-lg group-hover:bg-blue-500/20 transition-colors">
+                <ConditionIcon condition={day.condition} className="w-6 h-6 text-blue-400" />
               </div>
             </div>
             
             <div className="flex items-center gap-4 justify-end w-48">
-              <span className="text-sm font-bold text-white w-8 text-right underline decoration-white/10 underline-offset-4">{Math.round(day.avgTemp)}°</span>
+              <span className="text-base font-bold text-white w-8 text-right">{formatWeatherValue(day.avgTemp)}°</span>
               <div className="flex items-center gap-2 select-none">
-                <span className="text-[10px] text-blue-400/80 font-bold w-6 text-right leading-none">{day.minTemp}°</span>
+                <span className="text-[10px] text-blue-400/80 font-bold w-6 text-right leading-none">{formatWeatherValue(day.minTemp)}°</span>
                 
                 <div className="h-1.5 w-16 rounded-full bg-white/10 relative overflow-hidden">
                   <div className="absolute inset-0 bg-linear-to-r from-blue-500 via-orange-400 to-red-500" />
                 </div>
                 
-                <span className="text-[10px] text-red-500/80 font-bold w-6 text-left leading-none">{day.maxTemp}°</span>
+                <span className="text-[10px] text-red-500/80 font-bold w-6 text-left leading-none">{formatWeatherValue(day.maxTemp)}°</span>
               </div>
             </div>
           </div>
