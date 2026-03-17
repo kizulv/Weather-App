@@ -123,7 +123,7 @@ function WeatherEffects({ condition }: { condition: string }) {
           condition={condition} 
           className={cn(
             "w-full h-full object-contain filter drop-shadow-md",
-            (condition === "WEATHER_CLEAR" || condition === "WEATHER_HOT" || condition === "WEATHER_EXTREME_HEAT") ? "animate-spin-icon" : "animate-float-icon"
+            (condition === "WEATHER_HOT" || condition === "WEATHER_EXTREME_HEAT") ? "animate-spin-icon" : "animate-float-icon"
           )} 
         />
       </div>
