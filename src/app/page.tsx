@@ -80,19 +80,19 @@ export default function WeatherDashboard() {
           <SidebarTrigger className="text-white/60 hover:text-white" />
         </div>
 
-        <main className="flex-1 p-8 space-y-8 max-w-7xl mx-auto w-full pt-0">
+        <main className="flex-1 p-4 md:p-8 md:pt-0 space-y-8 max-w-8xl mx-auto w-full pt-0 min-w-0">
           {/* Combined Real-time Weather Card */}
           {data && <CurrentWeatherCard data={data} />}
 
-          {/* Chart Section */}
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-            <div className="lg:col-span-2 flex flex-col gap-8">
+          {/* Chart Section - Flex Layout for dynamic width */}
+          <section className="flex flex-col lg:flex-row gap-8 items-stretch">
+            <div className="flex-1 flex flex-col gap-8 min-w-0">
               <WeatherChart data={past24h} />
               <div className="flex-1">
                 <HourlyForecast data={past24h} />
               </div>
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col w-full lg:w-95 lg:min-w-95 shrink-0">
               <DailyForecast data={daily} />
             </div>
           </section>

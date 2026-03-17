@@ -118,7 +118,7 @@ function WeatherEffects({ condition }: { condition: string }) {
       `}</style>
       
       {/* BACKGROUND WEATHER ICON */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-24 md:h-24 opacity-40 pointer-events-none z-0">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 opacity-40 pointer-events-none z-0">
         <ConditionIcon 
           condition={condition} 
           className={cn(
@@ -220,53 +220,56 @@ export function CurrentWeatherCard({ data }: CurrentWeatherCardProps) {
 
   return (
     <section className={cn(
-      "relative overflow-hidden rounded-3xl border bg-linear-to-br px-6 py-8 backdrop-blur-3xl shadow-lg transition-all duration-700 group",
+      "relative overflow-hidden rounded-3xl border bg-linear-to-br px-3 py-6 md:px-6 md:py-8 backdrop-blur-3xl shadow-lg transition-all duration-700 group w-full",
       theme
     )}>
       {/* Immersive Weather Effects Background */}
       <WeatherEffects condition={data.condition} />
       
-      <div className="relative z-10 flex flex-col xl:flex-row items-center justify-between gap-4">
+      <div className="relative z-10 flex flex-col xl:flex-row items-center justify-between gap-6 w-full">
         {/* Main Info Group */}
-        <div className="flex items-center gap-4 md:gap-8 flex-1">
-          <div className="flex flex-col gap-1.5 min-w-fit">
-            <div className="flex items-center gap-1.5 text-white/70 bg-white/5 w-fit px-2 py-0.5 rounded-full border border-white/5">
-              <MapPin className="w-2.25 h-2.25 text-white" />
-              <span className="text-[8px] font-bold tracking-widest uppercase whitespace-nowrap">Lai Châu • VN</span>
+        <div className="flex flex-col xl:flex-row items-center gap-6 xl:gap-8 flex-1 w-full xl:w-auto">
+          {/* Location & Title */}
+          <div className="flex flex-col gap-2 items-center xl:items-start text-center xl:text-left w-full xl:w-fit">
+            <div className="flex items-center gap-1.5 text-white/90 bg-white/10 backdrop-blur-md w-fit px-3 py-1 rounded-full border border-white/20">
+              <MapPin className="w-2.5 h-2.5 text-white" />
+              <span className="text-[8px] font-bold tracking-[0.2em] uppercase whitespace-nowrap">Lai Châu • VN</span>
             </div>
-            <h2 className="text-sm font-bold text-white/60 whitespace-nowrap">
+            <h2 className="text-sm font-bold text-white/50 whitespace-nowrap">
               Thời tiết <span className="text-white">hiện tại</span>
             </h2>
           </div>
 
-          <div className="flex items-center gap-5">
-            <div className="relative">
-              <span className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-md font-sans">
+          {/* Temperature & State - Responsive Box */}
+          <div className="flex flex-row items-center justify-center gap-25 xl:gap-4 w-full xl:w-auto text-white">
+            <div className="relative flex items-start">
+              <span className="text-5xl sm:text-6xl xl:text-6xl font-black text-white tracking-tighter drop-shadow-md font-sans">
                 {formatWeatherValue(data.temperature)}
               </span>
-              <span className="absolute top-0.5 -right-6 text-lg font-bold text-white leading-none">°C</span>
+              <span className="text-2xl font-bold text-white -mt-1 ml-1 opacity-80">°C</span>
             </div>
             
-            <div className="h-8 ml-4 w-px bg-white/10" />
+            <div className="h-12 w-0.5 bg-white/10 hidden md:block" />
 
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 bg-white/5 rounded-lg border border-white/10 backdrop-blur-md shadow-sm">
-                <ConditionIcon condition={data.condition} className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-4 sm:gap-3">
+              <div className="p-2.5 bg-white/10 sm:bg-white/5 rounded-2xl border border-white/10 backdrop-blur-md shadow-sm hidden sm:block">
+                <ConditionIcon condition={data.condition} className="w-8 h-8 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="flex flex-col justify-center">
-                <p className="text-sm font-bold text-white leading-tight">{conditionName}</p>
-                <div className="flex items-center gap-1 text-white/70 mt-1 bg-white/5 px-2 py-0.5 rounded-full border border-white/5" suppressHydrationWarning>
-                  <Clock className="w-2.25 h-2.25 text-white" />
-                  <span className="text-[10px] font-bold tracking-widest">
+                <p className="text-lg sm:text-sm font-black text-white leading-tight">{conditionName}</p>
+                <div className="flex items-center gap-1 text-white/70 mt-1.5 bg-black/20 sm:bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5" suppressHydrationWarning>
+                  <Clock className="w-2.5 h-2.5 text-white" />
+                  <span className="text-[10px] font-bold tracking-widest mt-0.5">
                     {isMounted && currentTime ? currentTime.toLocaleTimeString('vi-VN') : "--:--:--"}
                   </span>
                 </div>
               </div>
             </div>
-          </div>
         </div>
+      </div>
+        
         {/* Metrics Row - Occupies exactly 1/2 of the width on desktop */}
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-4 w-full xl:w-1/3 shrink-0">
+        <div className="grid grid-cols-2 gap-3 w-full xl:w-1/3 shrink-0">
           <MetricSmall 
             icon={Droplets} 
             label="Độ ẩm" 

@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -7,16 +6,6 @@ import { cn } from "@/lib/utils"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
-
-const fontSans = Geist({
-  subsets: ["latin"],
-  variable: "--font-sans",
-})
-
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-})
 
 export const metadata: Metadata = {
   title: "Bảng điều khiển | Weather Intelligence",
@@ -30,6 +19,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -39,9 +30,9 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="vi"
       suppressHydrationWarning
-      className={cn("antialiased dark", fontMono.variable, "font-sans", fontSans.variable)}
+      className={cn("antialiased dark", "font-sans")}
     >
       <body className="bg-[#0f172a] relative">
         {/* Global Background Glows */}
@@ -55,7 +46,7 @@ export default function RootLayout({
           <TooltipProvider>
             <SidebarProvider>
               <AppSidebar />
-              <main className="flex-1 relative z-10">
+              <main className="flex-1 relative z-10 min-w-0">
                 {children}
               </main>
             </SidebarProvider>

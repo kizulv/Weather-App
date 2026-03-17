@@ -28,7 +28,7 @@ export function WeatherChart({ data }: WeatherChartProps) {
       </div>
       
       <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <div className="min-w-150 h-full">
+        <div className="min-w-160 h-full">
           <ResponsiveContainer width="100%" height="90%">
             <BarChart data={[...data].reverse()} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
               <defs>
