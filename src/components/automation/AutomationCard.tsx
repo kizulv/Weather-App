@@ -5,6 +5,7 @@ import { Card } from "../ui/card";
 import { Zap, Clock, Trash2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { Device } from "@/types/automation";
 
 interface AutomationCardProps {
   id: string;
@@ -13,6 +14,7 @@ interface AutomationCardProps {
   trigger: { type: string; value: string };
   actions: { service: string; entity_id: string }[];
   last_ran_at?: string;
+  devices: Device[];
   onToggle: (id: string, enabled: boolean) => void;
   onClick: () => void;
   onDelete: (id: string) => void;
@@ -26,6 +28,7 @@ export function AutomationCard({
   trigger,
   actions,
   last_ran_at,
+  devices,
   onToggle,
   onClick,
   onDelete,
@@ -62,9 +65,10 @@ export function AutomationCard({
   const getActionLabel = () => {
     if (actions.length === 0) return "Trống";
     const action = actions[0];
-    const serviceLabel = action.service.includes("turn_on") ? "Bật" : "Tắt";
-    const entity = action.entity_id.split(".")[1] || action.entity_id;
-    return `${serviceLabel} ${entity}`;
+    const serviceLabel = action.service.includes("turn_on") ? "Bật" : action.service.includes("toggle") ? "Đảo" : "Tắt";
+    const device = devices.find(d => d.entity_id === action.entity_id);
+    const deviceName = device?.name || action.entity_id.split(".")[1] || action.entity_id;
+    return `${serviceLabel} ${deviceName}`;
   };
 
   const formatLastRan = (dateStr?: string) => {

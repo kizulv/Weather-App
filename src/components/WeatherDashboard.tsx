@@ -20,7 +20,7 @@ import { AutomationDialog } from "@/components/automation/AutomationDialog";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Automation } from "@/types/automation";
+import { Automation, Device } from "@/types/automation";
 
 interface WeatherDashboardProps {
   initialData: {
@@ -40,6 +40,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [dialogKey, setDialogKey] = useState(0);
+  const [devices, setDevices] = useState<Device[]>([]);
 
   const fetchAutomations = useCallback(async () => {
     try {
@@ -54,6 +55,13 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
   useEffect(() => {
     const init = async () => {
       await fetchAutomations();
+      try {
+        const res = await fetch("/api/home-assistant/devices");
+        const json = await res.json();
+        if (json.success) setDevices(json.data);
+      } catch (err) {
+        console.error("Lỗi fetch devices:", err);
+      }
     };
     init();
   }, [fetchAutomations]);
@@ -261,6 +269,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
                   trigger={automation.trigger}
                   actions={automation.actions}
                   last_ran_at={automation.last_ran_at}
+                  devices={devices}
                   onToggle={handleToggleAutomation}
                   onDelete={handleDeleteAutomation}
                   onRun={handleRunAutomation}
