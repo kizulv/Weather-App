@@ -65,7 +65,7 @@ export function WeatherChart({ data }: WeatherChartProps) {
   }
 
   return (
-    <div className="h-87.5 w-full rounded-2xl border border-white/10 bg-black/20 p-4 md:p-6 backdrop-blur-xl shadow-2xl flex flex-col">
+    <div className="w-full rounded-2xl border border-white/10 bg-black/20 p-4 md:p-6 backdrop-blur-xl shadow-2xl flex flex-col">
       <div className="mb-6 flex items-center justify-between shrink-0">
         <div>
           <h3 className="text-lg font-semibold text-white/90">Xu hướng nhiệt độ 24h qua</h3>
