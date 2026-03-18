@@ -36,6 +36,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useRouter, usePathname } from "next/navigation"
+import { SettingsDialog } from "@/components/settings-dialog"
 
 const navMain = [
   {
@@ -154,17 +155,32 @@ export function AppSidebar() {
             <SidebarMenu className="gap-2">
               {navSecondary.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    size="default" 
-                    tooltip={item.title} 
-                    className="h-11 px-3 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-all duration-200 group"
-                  >
-                    <a href={item.url} className="flex items-center gap-3">
-                      <item.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-105" />
-                      <span className="font-semibold text-sm tracking-tight">{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
+                  {item.title === "Cài đặt" ? (
+                    <SettingsDialog>
+                      <SidebarMenuButton 
+                        size="default" 
+                        tooltip={item.title} 
+                        className="h-11 px-3 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-all duration-200 group w-full"
+                      >
+                        <div className="flex items-center gap-3 w-full">
+                          <item.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-105" />
+                          <span className="font-semibold text-sm tracking-tight">{item.title}</span>
+                        </div>
+                      </SidebarMenuButton>
+                    </SettingsDialog>
+                  ) : (
+                    <SidebarMenuButton 
+                      asChild 
+                      size="default" 
+                      tooltip={item.title} 
+                      className="h-11 px-3 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-all duration-200 group"
+                    >
+                      <a href={item.url} className="flex items-center gap-3">
+                        <item.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-105" />
+                        <span className="font-semibold text-sm tracking-tight">{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

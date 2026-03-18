@@ -77,7 +77,7 @@ export default function LoginPage() {
             </div>
             <CardTitle className="text-2xl font-bold text-white tracking-tight">API Access</CardTitle>
             <CardDescription className="text-white/60">
-              Đăng nhập để nhận API Token
+              Đăng nhập hệ thống
             </CardDescription>
           </CardHeader>
 
@@ -120,7 +120,7 @@ export default function LoginPage() {
                 className="w-full bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/25 transition-all"
                 disabled={isLoading}
               >
-                {isLoading ? "Đang xác thực..." : "Đăng nhập & Lấy Token"}
+                {isLoading ? "Đang xác thực..." : "Đăng nhập"}
               </Button>
             </form>
           </CardContent>
