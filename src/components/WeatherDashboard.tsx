@@ -39,6 +39,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
+  const [dialogKey, setDialogKey] = useState(0);
 
   const fetchAutomations = useCallback(async () => {
     try {
@@ -240,6 +241,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
               <Button 
                 onClick={() => {
                   setSelectedAutomation(null);
+                  setDialogKey(k => k + 1);
                   setIsDialogOpen(true);
                 }}
                 className="h-10 px-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold transition-all flex gap-2"
@@ -264,6 +266,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
                   onRun={handleRunAutomation}
                   onClick={() => {
                     setSelectedAutomation(automation);
+                    setDialogKey(k => k + 1);
                     setIsDialogOpen(true);
                   }}
                 />
@@ -272,6 +275,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
               <div 
                 onClick={() => {
                   setSelectedAutomation(null);
+                  setDialogKey(k => k + 1);
                   setIsDialogOpen(true);
                 }}
                 className="min-h-40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 text-white/10 hover:text-white/30 hover:border-white/10 transition-all cursor-pointer group"
@@ -285,7 +289,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
           </section>
 
           <AutomationDialog
-            key={selectedAutomation?._id || "new"}
+            key={dialogKey}
             open={isDialogOpen}
             onOpenChange={setIsDialogOpen}
             automation={selectedAutomation}
