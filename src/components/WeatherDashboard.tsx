@@ -236,7 +236,6 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
                 <div className="flex items-center gap-3">
                   <h2 className="text-lg font-semibold text-white">Tự động hóa</h2>
                 </div>
-                <p className="text-sm text-white/40 font-medium">Điều khiển thông minh ngôi nhà của bạn.</p>
               </div>
               <Button 
                 onClick={() => {
@@ -270,15 +269,18 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
                 />
               ))}
               
-              {automations.length === 0 && (
-                <div 
-                  onClick={() => setIsDialogOpen(true)}
-                  className="col-span-full h-40 border-2 border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center gap-3 text-white/20 hover:text-white/40 hover:border-white/10 transition-all cursor-pointer group"
-                >
-                  <Plus className="h-8 w-8 group-hover:scale-110 transition-transform" />
-                  <p className="text-sm font-bold uppercase tracking-widest">Chưa có kịch bản tự động hóa nào</p>
+              <div 
+                onClick={() => {
+                  setSelectedAutomation(null);
+                  setIsDialogOpen(true);
+                }}
+                className="min-h-40 border-2 border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center gap-3 text-white/10 hover:text-white/30 hover:border-white/10 transition-all cursor-pointer group"
+              >
+                <div className="p-4 rounded-full bg-white/5 group-hover:scale-110 transition-transform">
+                  <Plus className="h-6 w-6" />
                 </div>
-              )}
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Thêm kịch bản mới</span>
+              </div>
             </div>
           </section>
 
