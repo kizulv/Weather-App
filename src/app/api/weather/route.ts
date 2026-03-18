@@ -29,7 +29,10 @@ export async function GET() {
     }
 
     return NextResponse.json(data, {
-      headers: { "Cache-Control": "private, max-age=30" },
+      headers: { 
+        "Cache-Control": "private, max-age=60",
+        "X-Accel-Buffering": "no", // Chống Cloudflare Tunnel buffer response
+      },
     });
   } catch (error) {
     console.error("Lỗi khi fetch dữ liệu từ api.pcthanh.com:", error);

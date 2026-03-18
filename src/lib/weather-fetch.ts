@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { DailyWeather } from "@/lib/weather-data";
 
 // ========== IN-MEMORY CACHE ==========
-const CACHE_TTL_MS = 30 * 1000; // 30 giây
+const CACHE_TTL_MS = 60 * 1000; // 60 giây — khớp với interval auto-refresh ở client
 
 interface WeatherCache {
   data: WeatherData;
