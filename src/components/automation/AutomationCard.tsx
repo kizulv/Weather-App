@@ -16,6 +16,7 @@ interface AutomationCardProps {
   onToggle: (id: string, enabled: boolean) => void;
   onClick: () => void;
   onDelete: (id: string) => void;
+  onRun: (id: string) => Promise<void>;
 }
 
 export function AutomationCard({
@@ -28,8 +29,21 @@ export function AutomationCard({
   onToggle,
   onClick,
   onDelete,
+  onRun,
 }: AutomationCardProps) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+
+  const handleRun = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isRunning) return;
+    setIsRunning(true);
+    try {
+      await onRun(id);
+    } finally {
+      setIsRunning(false);
+    }
+  };
 
   const handleToggle = async (checked: boolean) => {
     setIsUpdating(true);
@@ -76,22 +90,8 @@ export function AutomationCard({
       )}
       onClick={onClick}
     >
-      <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-        <button 
-          title="Xóa tự động hóa"
-          aria-label="Xóa tự động hóa"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(id);
-          }}
-          className="p-2 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
-
       <div className="flex flex-col gap-6">
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className={cn(
               "p-3 rounded-2xl",
@@ -100,11 +100,38 @@ export function AutomationCard({
               <Zap className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-lg font-black tracking-tight text-white">{name}</h3>
-              <p className="text-xs font-bold uppercase tracking-widest text-white/30 mt-1">
+              <h3 className="text-base font-semibold text-white">{name}</h3>
+              <p className="text-[11px] font-bold uppercase text-white/30 mt-1">
                 {enabled ? "Đang hoạt động" : "Đã tắt"}
               </p>
             </div>
+          </div>
+          <div className="p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+            <button 
+              title="Chạy ngay"
+              aria-label="Chạy ngay"
+              disabled={isRunning}
+              onClick={handleRun}
+              className={cn(
+                "p-2 rounded-full transition-colors",
+                isRunning 
+                  ? "bg-blue-500/20 text-blue-400 animate-pulse" 
+                  : "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
+              )}
+            >
+              <Play className={cn("h-4 w-4", isRunning && "fill-current")} />
+            </button>
+            <button 
+              title="Xóa tự động hóa"
+              aria-label="Xóa tự động hóa"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(id);
+              }}
+              className="p-2 rounded-full bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           </div>
           <div onClick={(e) => e.stopPropagation()}>
             <Switch 
@@ -143,12 +170,6 @@ export function AutomationCard({
               <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">
                 Chạy: {formatLastRan(last_ran_at)}
               </span>
-            )}
-            {enabled && (
-              <div className="flex items-center gap-1">
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-500/70">Online</span>
-              </div>
             )}
           </div>
         </div>

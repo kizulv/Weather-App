@@ -17,7 +17,7 @@ import { DailyForecast } from "@/components/weather/DailyForecast";
 import { HourlyForecast } from "@/components/weather/HourlyForecast";
 import { AutomationCard } from "@/components/automation/AutomationCard";
 import { AutomationDialog } from "@/components/automation/AutomationDialog";
-import { Plus, Zap } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Automation } from "@/types/automation";
@@ -112,6 +112,24 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
     }
   };
 
+  const handleRunAutomation = async (id: string) => {
+    try {
+      const res = await fetch(`/api/automation/${id}/run`, {
+        method: "POST"
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast.success("Đã kích hoạt kịch bản");
+        fetchAutomations(); // Refresh list to get new last_ran_at
+      } else {
+        toast.error(json.message || "Lỗi khi thực thi");
+      }
+    } catch (error) {
+      console.error("Lỗi chạy kịch bản:", error);
+      toast.error("Lỗi kết nối");
+    }
+  };
+
   // Hàm refresh dữ liệu từ API (chỉ dùng cho auto-refresh sau lần đầu)
   const refreshWeatherData = useCallback(async () => {
     try {
@@ -141,7 +159,11 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
   useEffect(() => {
     const checkAutomations = async () => {
       try {
-        await fetch("/api/automation/check");
+        const res = await fetch("/api/automation/check");
+        const json = await res.json();
+        if (json.executedCount > 0) {
+          fetchAutomations(); // Refresh list to update last_ran_at on card
+        }
       } catch (err) {
         console.error("Lỗi check automation:", err);
       }
@@ -156,7 +178,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
     checkAutomations();
 
     return () => clearInterval(dataTimer);
-  }, [refreshWeatherData]);
+  }, [refreshWeatherData, fetchAutomations]);
 
   // Nếu không có initial data (fallback), fetch lần đầu từ client
   useEffect(() => {
@@ -176,7 +198,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
             <div className="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
             <div className="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <p className="text-white/40 text-sm font-medium animate-pulse">Đang kết nối với trạm khí tượng...</p>
+          <p className="text-white/40 text-sm font-medium animate-pulse">Đang kết nối và lấy dữ liệu...</p>
         </div>
       </div>
     );
@@ -212,10 +234,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-blue-500/20 text-blue-400">
-                    <Zap className="h-5 w-5" />
-                  </div>
-                  <h2 className="text-2xl font-black tracking-tight text-white">Tự động hóa</h2>
+                  <h2 className="text-lg font-semibold text-white">Tự động hóa</h2>
                 </div>
                 <p className="text-sm text-white/40 font-medium">Điều khiển thông minh ngôi nhà của bạn.</p>
               </div>
@@ -243,6 +262,7 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
                   last_ran_at={automation.last_ran_at}
                   onToggle={handleToggleAutomation}
                   onDelete={handleDeleteAutomation}
+                  onRun={handleRunAutomation}
                   onClick={() => {
                     setSelectedAutomation(automation);
                     setIsDialogOpen(true);

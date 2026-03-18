@@ -23,8 +23,10 @@ export async function GET() {
     const haToken = decrypt(config.token);
     const haUrl = config.url.replace(/\/$/, "");
 
+    // Lấy thời gian hiện tại theo múi giờ Việt Nam (GMT+7)
     const now = new Date();
-    const currentHourMin = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const vnTime = new Date(now.getTime() + (7 * 60 * 60 * 1000) + (now.getTimezoneOffset() * 60000));
+    const currentHourMin = `${String(vnTime.getHours()).padStart(2, "0")}:${String(vnTime.getMinutes()).padStart(2, "0")}`;
     
     const executionResults = [];
 
