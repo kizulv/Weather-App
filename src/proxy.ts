@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 // Các routes không cần check token
 const publicRoutes = ['/login', '/api/auth/login'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
