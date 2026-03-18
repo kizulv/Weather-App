@@ -18,6 +18,13 @@ interface WeatherChartProps {
 }
 
 export function WeatherChart({ data }: WeatherChartProps) {
+  // Tránh render chart khi chưa có data — gây lỗi width/height -1 từ Recharts
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-87.5 w-full rounded-2xl border border-white/10 bg-black/20 animate-pulse" />
+    );
+  }
+
   return (
     <div className="h-87.5 w-full rounded-2xl border border-white/10 bg-black/20 p-4 md:p-6 backdrop-blur-xl shadow-2xl flex flex-col">
       <div className="mb-6 flex items-center justify-between shrink-0">
