@@ -1,9 +1,9 @@
 "use client";
 
+import { useRef, useCallback } from "react";
 import {
   Bar,
   BarChart,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
@@ -12,13 +12,52 @@ import {
 } from "recharts";
 import { HourlyWeather } from "@/lib/weather-data";
 import { formatWeatherValue } from "@/lib/utils";
+import { useSyncExternalStore } from "react";
+
+// Hook đo kích thước container bằng ResizeObserver
+function useContainerSize() {
+  const sizeRef = useRef({ width: 0, height: 0 });
+  const observerRef = useRef<ResizeObserver | null>(null);
+  const callbacksRef = useRef(new Set<() => void>());
+
+  const subscribe = useCallback((callback: () => void) => {
+    callbacksRef.current.add(callback);
+    return () => callbacksRef.current.delete(callback);
+  }, []);
+
+  const getSnapshot = useCallback(() => sizeRef.current, []);
+
+  const ref = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+    if (node) {
+      observerRef.current = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (entry) {
+          const { width, height } = entry.contentRect;
+          if (width !== sizeRef.current.width || height !== sizeRef.current.height) {
+            sizeRef.current = { width: Math.floor(width), height: Math.floor(height) };
+            callbacksRef.current.forEach((cb) => cb());
+          }
+        }
+      });
+      observerRef.current.observe(node);
+    }
+  }, []);
+
+  const size = useSyncExternalStore(subscribe, getSnapshot, () => ({ width: 0, height: 0 }));
+
+  return { ref, ...size };
+}
 
 interface WeatherChartProps {
   data: HourlyWeather[];
 }
 
 export function WeatherChart({ data }: WeatherChartProps) {
-  // Tránh render chart khi chưa có data — gây lỗi width/height -1 từ Recharts
+  const { ref, width, height } = useContainerSize();
+
   if (!data || data.length === 0) {
     return (
       <div className="h-87.5 w-full rounded-2xl border border-white/10 bg-black/20 animate-pulse" />
@@ -34,10 +73,10 @@ export function WeatherChart({ data }: WeatherChartProps) {
         </div>
       </div>
       
-      <div className="flex-1 min-h-0 overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <div className="min-w-160 h-full">
-          <ResponsiveContainer width="100%" height="90%">
-            <BarChart data={[...data].reverse()} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+      <div className="overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div ref={ref} className="min-w-160 h-64">
+          {width > 0 && height > 0 && (
+            <BarChart width={width} height={height} data={[...data].reverse()} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#f97316" stopOpacity={0.8} />
@@ -51,7 +90,7 @@ export function WeatherChart({ data }: WeatherChartProps) {
                 tickLine={false} 
                 tick={{ fill: '#ffffff40', fontSize: 12 }} 
                 dy={10}
-                interval={1} // Hiển thị nhiều tick hơn khi đã có scroll
+                interval={1}
               />
               <YAxis 
                 axisLine={false} 
@@ -87,7 +126,7 @@ export function WeatherChart({ data }: WeatherChartProps) {
                 <LabelList dataKey="temperature" position="top" fill="#ffffff60" fontSize={10} offset={8} formatter={(val: unknown) => val != null ? Math.round(Number(val)) : ""} />
               </Bar>
             </BarChart>
-          </ResponsiveContainer>
+          )}
         </div>
       </div>
     </div>
