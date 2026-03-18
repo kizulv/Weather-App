@@ -69,21 +69,18 @@ export function AppSidebar() {
   React.useEffect(() => {
     if (pathname === "/login") return
 
-    const fetchUser = async () => {
-      try {
-        const response = await fetch("/api/auth/me")
-        if (response.ok) {
-          const data = await response.json()
-          if (data.success) {
-            setUser(data.user)
-          }
-        }
-      } catch (error) {
-        console.error("Lỗi khi lấy thông tin người dùng:", error)
+    // Đọc cookie user_info (non-httpOnly) chứa thông tin hiển thị
+    try {
+      const cookieStr = document.cookie
+      const userCookie = cookieStr.split("; ").find(c => c.startsWith("user_info="))
+      if (userCookie) {
+        const value = decodeURIComponent(userCookie.split("=").slice(1).join("="))
+        const info = JSON.parse(value)
+        setUser({ name: info.name, role: info.role })
       }
+    } catch (error) {
+      console.error("Lỗi khi đọc thông tin người dùng:", error)
     }
-
-    fetchUser()
   }, [pathname])
 
   if (pathname === "/login") {

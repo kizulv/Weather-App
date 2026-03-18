@@ -13,5 +13,14 @@ export async function POST() {
     path: "/",
   });
 
+  // Xoá cookie user_info
+  cookieStore.set({
+    name: "user_info",
+    value: "",
+    httpOnly: false,
+    expires: new Date(0),
+    path: "/",
+  });
+
   return NextResponse.json({ success: true, message: "Đã đăng xuất" });
 }

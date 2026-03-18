@@ -26,6 +26,17 @@ export async function POST(req: Request) {
       maxAge: 60 * 60 * 24 // 1 ngày
     });
 
+    // Cookie hiển thị thông tin user cho client (non-httpOnly)
+    cookieStore.set({
+      name: "user_info",
+      value: JSON.stringify({ name: result.user.name, role: result.user.role }),
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: 60 * 60 * 24
+    });
+
     return NextResponse.json(
       { success: true, user: result.user },
       { status: 200 }
