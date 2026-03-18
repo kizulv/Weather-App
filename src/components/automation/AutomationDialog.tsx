@@ -7,11 +7,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -19,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Zap, Plus, Trash2, Clock, PlayCircle, Play, Check, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Clock, PlayCircle, Play, Check, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   Popover,
@@ -126,41 +124,48 @@ export function AutomationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-150 bg-[#0f172a]/95 backdrop-blur-2xl border-white/10 text-white rounded-3xl p-0 overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]">
-        <DialogHeader className="p-8 pb-4 border-b border-white/5">
-          <DialogTitle className="text-2xl font-black tracking-tight flex items-center gap-3">
-            <Zap className="h-6 w-6 text-blue-400" />
-            {automation ? "Sửa Tự động hóa" : "Thêm Tự động hóa mới"}
-          </DialogTitle>
-          <DialogDescription className="text-white/40 font-medium">
-            Thiết lập kịch bản tự động điều khiển thiết bị của bạn.
+      <DialogContent className="sm:max-w-135 bg-black/40 backdrop-blur-xl border border-white/10 text-white rounded-2xl p-0 overflow-hidden shadow-2xl">
+        {/* Header — Tên automation nằm ở đây */}
+        <DialogHeader className="p-5 pb-4 border-b border-white/5">
+          {automation ? (
+            <DialogTitle className="text-lg font-semibold text-white/90 truncate">
+              {automation.name}
+            </DialogTitle>
+          ) : (
+            <DialogTitle className="text-lg font-semibold text-white/90">
+              Tự động hóa mới
+            </DialogTitle>
+          )}
+          <DialogDescription className="sr-only">
+            Thiết lập kịch bản tự động điều khiển thiết bị
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-8 space-y-8 overflow-y-auto max-h-110">
-          {/* Tên */}
-          <div className="space-y-4">
-            <Label className="text-xs font-black uppercase tracking-widest text-white/30">Thông tin cơ bản</Label>
+        {/* Body */}
+        <div className="p-5 pt-3 space-y-4 overflow-y-auto max-h-[70vh]">
+          {/* Tên automation */}
+          <div className="space-y-2">
+            <span className="text-sm font-medium text-white/50">Tên kịch bản</span>
             <Input 
               placeholder="VD: Bật nóng lạnh 8h sáng"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="bg-white/5 border-white/10 rounded-2xl h-12 focus:ring-blue-500/20 font-bold"
+              className="bg-white/5 border-white/10 rounded-xl h-10 focus:ring-blue-500/20 font-medium text-sm"
             />
           </div>
 
           {/* Trigger */}
-          <div className="space-y-4">
-            <Label className="text-xs font-black uppercase tracking-widest text-white/30 flex items-center gap-2">
-              <Clock className="h-3 w-3" /> Trigger (Kích hoạt)
-            </Label>
-            <div className="flex gap-4">
+          <div className="space-y-2">
+            <span className="text-sm font-medium text-white/50 flex items-center gap-2">
+              <Clock className="h-3.5 w-3.5" /> Kích hoạt
+            </span>
+            <div className="flex gap-3">
               <Select 
                 value={trigger.type} 
                 onValueChange={(v) => setTrigger({...trigger, type: v})}
               >
-                <SelectTrigger className="w-45 bg-white/5 border-white/10 rounded-2xl h-12 font-bold">
-                  <SelectValue placeholder="Chọn loại trigger" />
+                <SelectTrigger className="w-36 bg-white/5 border-white/10 rounded-xl h-10 text-sm font-medium">
+                  <SelectValue placeholder="Loại trigger" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#1e293b] border-white/10 text-white rounded-xl">
                   <SelectItem value="time">Theo giờ</SelectItem>
@@ -172,31 +177,33 @@ export function AutomationDialog({
                   type="time"
                   value={trigger.value}
                   onChange={(e) => setTrigger({...trigger, value: e.target.value})}
-                  className="bg-white/5 border-white/10 rounded-2xl h-12 font-bold w-full"
+                  className="bg-white/5 border-white/10 rounded-xl h-10 font-medium text-sm flex-1"
                 />
               )}
             </div>
           </div>
 
           {/* Actions */}
-          <div className="space-y-4">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-black uppercase tracking-widest text-white/30 flex items-center gap-2">
-                <PlayCircle className="h-3 w-3" /> Hành động thực thi
-              </Label>
-              <Button 
-                variant="ghost" 
-                size="icon-xs" 
+              <span className="text-sm font-medium text-white/50 flex items-center gap-2">
+                <PlayCircle className="h-3.5 w-3.5" /> Hành động
+              </span>
+              <button 
                 onClick={addAction}
-                className="rounded-full bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
+                title="Thêm hành động"
+                className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70 transition-colors"
               >
-                <Plus className="h-4 w-4" />
-              </Button>
+                <Plus className="h-3.5 w-3.5" />
+              </button>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-2">
               {actions.map((action, idx) => (
-                <div key={idx} className="flex gap-3 items-center bg-white/5 p-4 rounded-2xl border border-white/5 group/row">
+                <div 
+                  key={idx} 
+                  className="flex gap-2 items-center p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-transparent hover:border-white/10 group/row"
+                >
                   <Select 
                     value={action.service}
                     onValueChange={(v) => {
@@ -205,7 +212,7 @@ export function AutomationDialog({
                       setActions(newActions);
                     }}
                   >
-                    <SelectTrigger className="w-40 bg-white/5 border-white/10 rounded-xl h-10 font-bold">
+                    <SelectTrigger className="w-32 bg-white/5 border-white/10 rounded-lg h-9 text-sm font-medium">
                       <SelectValue placeholder="Lệnh" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1e293b] border-white/10 text-white rounded-xl">
@@ -223,23 +230,23 @@ export function AutomationDialog({
                         variant="outline"
                         role="combobox"
                         className={cn(
-                          "flex-1 justify-between bg-white/5 border-white/10 rounded-xl h-10 font-bold hover:bg-white/10 text-left px-3",
+                          "flex-1 justify-between bg-white/5 border-white/10 rounded-lg h-9 font-medium text-sm hover:bg-white/10 text-left px-3",
                           !action.entity_id && "text-white/30"
                         )}
                       >
                         <span className="truncate">
                           {action.entity_id 
                             ? (devices.find(d => d.entity_id === action.entity_id)?.name || action.entity_id) 
-                            : "Tìm chọn thiết bị..."}
+                            : "Chọn thiết bị..."}
                         </span>
-                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-75 p-0 bg-[#1e293b] border-white/10 rounded-xl overflow-hidden shadow-2xl">
+                    <PopoverContent className="w-72 p-0 bg-[#1e293b] border-white/10 rounded-xl overflow-hidden shadow-2xl">
                       <Command className="bg-transparent text-white">
-                        <CommandInput placeholder="Tìm tên hoặc ID thiết bị..." className="text-white border-white/5" />
-                        <CommandList className="max-h-64 no-scrollbar">
-                          <CommandEmpty>Không tìm thấy thiết bị nào.</CommandEmpty>
+                        <CommandInput placeholder="Tìm thiết bị..." className="text-white border-white/5 text-sm" />
+                        <CommandList className="max-h-56 no-scrollbar">
+                          <CommandEmpty>Không tìm thấy.</CommandEmpty>
                           <CommandGroup>
                             {devices.map((device) => (
                               <CommandItem
@@ -250,15 +257,15 @@ export function AutomationDialog({
                                   newActions[idx].entity_id = device.entity_id;
                                   setActions(newActions);
                                 }}
-                                className="flex flex-col items-start gap-1 py-3 px-4 aria-selected:bg-white/10 cursor-pointer"
+                                className="flex flex-col items-start gap-0.5 py-2.5 px-3 aria-selected:bg-white/10 cursor-pointer"
                               >
                                 <div className="flex items-center w-full justify-between">
-                                  <span className="font-bold text-sm text-white">{device.name}</span>
+                                  <span className="font-medium text-sm text-white">{device.name}</span>
                                   {action.entity_id === device.entity_id && (
-                                    <Check className="h-4 w-4 text-blue-400" />
+                                    <Check className="h-3.5 w-3.5 text-blue-400" />
                                   )}
                                 </div>
-                                <span className="text-[10px] text-white/40 font-mono tracking-tight">{device.entity_id}</span>
+                                <span className="text-[10px] text-white/40 font-mono">{device.entity_id}</span>
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -267,24 +274,21 @@ export function AutomationDialog({
                     </PopoverContent>
                   </Popover>
 
-                  <div className="flex items-center gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon-xs" 
+                  <div className="flex items-center gap-0.5">
+                    <button 
                       onClick={() => runAction(action)}
-                      title="Chạy thử hành động"
-                      className="text-blue-400 opacity-0 group-hover/row:opacity-100 hover:bg-blue-500/10 transition-all"
+                      title="Chạy thử"
+                      className="p-1.5 rounded-lg text-blue-400 opacity-0 group-hover/row:opacity-100 hover:bg-blue-500/10 transition-all"
                     >
-                      <Play className="h-4 w-4 fill-current" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon-xs" 
+                      <Play className="h-3.5 w-3.5 fill-current" />
+                    </button>
+                    <button 
                       onClick={() => removeAction(idx)}
-                      className="text-white/20 hover:text-red-400"
+                      title="Xóa hành động"
+                      className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -292,31 +296,32 @@ export function AutomationDialog({
           </div>
         </div>
 
-        <DialogFooter className="p-8 pt-4 border-t border-white/5 bg-white/5">
+        {/* Footer */}
+        <div className="flex items-center justify-between p-5 pt-3 border-t border-white/5">
           <Button 
             variant="ghost" 
             onClick={() => onOpenChange(false)}
-            className="rounded-2xl h-12 px-6 font-black uppercase tracking-widest text-xs text-white/40"
+            className="rounded-xl h-9 px-4 text-sm font-medium text-white/40 hover:text-white/70"
           >
             Hủy
           </Button>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button 
               variant="outline"
               onClick={runAllActions}
-              className="rounded-2xl h-12 px-6 border-blue-500/30 text-blue-400 hover:bg-blue-500/10 font-black uppercase tracking-widest text-xs"
+              className="rounded-xl h-9 px-4 border-white/10 text-white/60 hover:bg-white/5 hover:text-white text-sm font-medium"
             >
-              <Play className="h-4 w-4 mr-2 fill-current" />
+              <Play className="h-3.5 w-3.5 mr-1.5 fill-current" />
               Chạy thử
             </Button>
             <Button 
               onClick={handleSave}
-              className="rounded-2xl h-12 px-8 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-500/20"
+              className="rounded-xl h-9 px-5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold shadow-lg shadow-blue-500/20"
             >
-              Lưu cài đặt
+              Lưu
             </Button>
           </div>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
