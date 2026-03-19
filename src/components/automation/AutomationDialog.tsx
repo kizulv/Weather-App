@@ -385,7 +385,7 @@ export function AutomationDialog({
             )}
             <Button 
               onClick={handleSave}
-              className="rounded-sm h-9 px-5 bg-emerald-600/20  border border-emerald-500/30 hover:bg-emerald-600/30 hover:text-emerald-300 text-xs font-semibold shadow-lg shadow-emerald-500/10 transition-all hover:shadow-emerald-500/20"
+              className="rounded-sm h-9 px-5 bg-emerald-600/20  border border-emerald-500/30 hover:bg-emerald-600/30 text-xs font-semibold transition-all"
             >
               Lưu kịch bản
             </Button>
