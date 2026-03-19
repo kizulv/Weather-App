@@ -204,10 +204,10 @@ export function AutomationDialog({
                   value={trigger.type} 
                   onValueChange={(v) => setTrigger({...trigger, type: v})}
                 >
-                   <SelectTrigger className="w-36 bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-xs font-medium">
+                  <SelectTrigger className="w-36 bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-xs font-medium">
                     <SelectValue placeholder="Loại trigger" />
                   </SelectTrigger>
-                         <SelectContent className="bg-[#1e293b] border-slate-700/50 text-white rounded-sm">
+                  <SelectContent className="bg-[#1e293b] border-slate-700/50 text-white h-9 rounded-sm">
                     <SelectItem value="time">Theo giờ</SelectItem>
                     <SelectItem value="condition" disabled>Theo điều kiện</SelectItem>
                   </SelectContent>
