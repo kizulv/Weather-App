@@ -1,11 +1,6 @@
-import { Suspense } from "react";
-import { getWeatherDataFromCookies } from "@/lib/weather-fetch";
-import { getAutomationsFromDB, getDevicesFromDB } from "@/lib/automation-fetch";
-import { WeatherDashboard } from "@/components/WeatherDashboard";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
-// Loading skeleton — hiển thị ngay khi trang load, trước khi data sẵn sàng
-function WeatherSkeleton() {
+export default function Loading() {
   return (
     <div className="flex-1 min-h-svh text-slate-200">
       <div className="relative z-10 flex flex-col min-h-svh">
@@ -28,38 +23,20 @@ function WeatherSkeleton() {
               <div className="h-96 w-full rounded-2xl border border-white/10 bg-black/20 animate-pulse" />
             </div>
           </section>
+
+          {/* Automation skeleton */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="h-6 w-32 rounded bg-white/10 animate-pulse" />
+              <div className="h-10 w-28 rounded-xl bg-white/10 animate-pulse" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="h-40 rounded-2xl border border-white/10 bg-black/20 animate-pulse" />
+              <div className="h-40 rounded-2xl border border-white/10 bg-black/20 animate-pulse" />
+            </div>
+          </section>
         </main>
       </div>
     </div>
-  );
-}
-
-// Async server component — fetch TẤT CẢ data song song và stream khi sẵn sàng
-async function WeatherContent() {
-  // Gọi song song: weather + automations + devices — tránh waterfall
-  const [weatherData, automations, devices] = await Promise.all([
-    getWeatherDataFromCookies(),
-    getAutomationsFromDB(),
-    getDevicesFromDB(),
-  ]);
-
-  return (
-    <WeatherDashboard
-      initialData={weatherData ? {
-        realtime: weatherData.realtime,
-        past24h: weatherData.past24h,
-        daily: weatherData.daily,
-      } : null}
-      initialAutomations={automations}
-      initialDevices={devices}
-    />
-  );
-}
-
-export default function WeatherPage() {
-  return (
-    <Suspense fallback={<WeatherSkeleton />}>
-      <WeatherContent />
-    </Suspense>
   );
 }

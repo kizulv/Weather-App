@@ -28,19 +28,21 @@ interface WeatherDashboardProps {
     past24h: HourlyWeather[];
     daily: DailyWeather[];
   } | null;
+  initialAutomations?: Automation[];
+  initialDevices?: Device[];
 }
 
-export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
+export function WeatherDashboard({ initialData, initialAutomations, initialDevices }: WeatherDashboardProps) {
   const [data, setData] = useState<RealtimeWeather | null>(initialData?.realtime ?? null);
   const [past24h, setPast24h] = useState<HourlyWeather[]>(initialData?.past24h ?? []);
   const [daily, setDaily] = useState<DailyWeather[]>(initialData?.daily ?? []);
 
-  // Automation states
-  const [automations, setAutomations] = useState<Automation[]>([]);
+  // Automation states — sử dụng initial data từ server nếu có
+  const [automations, setAutomations] = useState<Automation[]>(initialAutomations ?? []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [dialogKey, setDialogKey] = useState(0);
-  const [devices, setDevices] = useState<Device[]>([]);
+  const [devices, setDevices] = useState<Device[]>(initialDevices ?? []);
 
   const fetchAutomations = useCallback(async () => {
     try {
@@ -54,17 +56,20 @@ export function WeatherDashboard({ initialData }: WeatherDashboardProps) {
 
   useEffect(() => {
     const init = async () => {
-      await fetchAutomations();
-      try {
-        const res = await fetch("/api/home-assistant/devices");
-        const json = await res.json();
-        if (json.success) setDevices(json.data);
-      } catch (err) {
-        console.error("Lỗi fetch devices:", err);
+      // Chỉ fetch nếu chưa có initial data từ server
+      if (!initialAutomations?.length) await fetchAutomations();
+      if (!initialDevices?.length) {
+        try {
+          const res = await fetch("/api/home-assistant/devices");
+          const json = await res.json();
+          if (json.success) setDevices(json.data);
+        } catch (err) {
+          console.error("Lỗi fetch devices:", err);
+        }
       }
     };
     init();
-  }, [fetchAutomations]);
+  }, [fetchAutomations, initialAutomations, initialDevices]);
 
   const handleSaveAutomation = async (data: Partial<Automation>) => {
     try {
