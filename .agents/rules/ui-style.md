@@ -24,4 +24,4 @@ trigger: always_on
 - Các thẻ Card, Dialog sử dụng background: `bg-slate-900/50 backdrop-blur-xl border border-white/10 text-white rounded-2xl shadow-2xl`
 - Tiêu đề sử dụng kích thước font chữ tối đa là `text-base` với các mục khác chỉ sử dụng `text-sm`
 - Nút bấm (Buttons): Luôn phải có bo góc `rounded-sm`, padding tiêu chuẩn `px-4 py-2`, và hiệu ứng chuyển cảnh `transition-colors duration-200` ưu tiên sử dụng các màu tối .
-- Form Inputs: Luôn có viền `border border-gray-300`, bo góc `rounded-sm`, và loại bỏ các vòng ring.
+- Form Inputs: Luôn có viền `border border-gray-300`, bo góc `rounded-sm`, và loại bỏ các vòng ring, kích thước font chữ `text-xs`.

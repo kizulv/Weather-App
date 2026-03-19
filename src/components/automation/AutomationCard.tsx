@@ -141,7 +141,7 @@ export function AutomationCard({
       </div>
 
       {/* Footer Area */}
-      <div className="flex items-center justify-between border-t border-white/5 pt-2 relative z-10">
+      <div className="flex items-center justify-between border-t border-white/5 pt-4 relative z-10">
         <div className="flex items-center gap-2">
           <div className={cn(
             "h-1.5 w-1.5 rounded-full",
@@ -153,7 +153,7 @@ export function AutomationCard({
         </div>
 
         {/* Action Buttons (Visible on hover) */}
-        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 duration-300">
+        <div className="flex items-center gap-2 duration-300">
           <button 
             title="Chạy ngay"
             disabled={isRunning}
