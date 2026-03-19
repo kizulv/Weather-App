@@ -141,17 +141,17 @@ export function AutomationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-135 bg-slate-900/10 backdrop-blur-xl border border-white/10 text-white rounded-2xl p-0 overflow-hidden shadow-2xl">
+      <DialogContent className="sm:max-w-135 bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 text-white rounded-2xl p-0 overflow-hidden shadow-2xl focus:outline-none text-xs">
         
         {/* ── Header ── */}
-        <DialogHeader className="relative px-6 py-3 border-b border-white/5">
+        <DialogHeader className="relative px-6 py-4 border-b border-slate-800/30">
           {/* Decorative glow */}
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
           
           <div className="flex items-center gap-3 relative z-10">
             <div className={cn(
               "p-1.5 rounded-xl transition-all duration-500",
-              "bg-white/5 text-white shadow-lg border border-white/10"
+               "bg-slate-800/40 text-slate-300 shadow-lg border border-slate-700/50"
             )}>
               <Zap className="h-4 w-4 fill-current" />
             </div>
@@ -168,17 +168,17 @@ export function AutomationDialog({
                     if (e.key === "Escape") setIsEditingName(false);
                   }}
                   placeholder="Tên kịch bản..."
-                  className="w-full bg-transparent text-white outline-none border-b border-blue-500/50 pb-1 placeholder:text-white/20"
+                  className="w-full bg-transparent text-white outline-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-b border-emerald-500/50 pb-1 placeholder:text-white/20"
                 />
               ) : (
                 <button
                   onClick={() => setIsEditingName(true)}
-                  className="group/name flex items-center gap-2 w-full text-left"
+                  className="group/name flex items-center gap-2 w-full text-left outline-none focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 >
                   <DialogTitle className="text-sm font-bold text-white truncate">
                     {name || "Kịch bản mới"}
                   </DialogTitle>
-                  <Pencil className="h-3 w-3 text-white/20 opacity-0 group-hover/name:opacity-100 transition-opacity shrink-0" />
+                   <Pencil className="h-3 w-3 text-slate-500 opacity-0 group-hover/name:opacity-100 transition-opacity shrink-0" />
                 </button>
               )}
             </div>
@@ -195,8 +195,8 @@ export function AutomationDialog({
           {/* ─ Trigger Section ─ */}
           <div className="space-y-2.5">
             <div className="flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5 text-white/40" />
-              <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">Kích hoạt</span>
+               <Clock className="h-3.5 w-3.5 text-slate-400" />
+               <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">Kích hoạt</span>
             </div>
             <div className="space-y-3">
               <div className="flex gap-3">
@@ -204,10 +204,10 @@ export function AutomationDialog({
                   value={trigger.type} 
                   onValueChange={(v) => setTrigger({...trigger, type: v})}
                 >
-                  <SelectTrigger className="w-36 bg-white/5 border-white/10 rounded-xl h-9 text-sm font-medium">
+                   <SelectTrigger className="w-36 bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-xs font-medium">
                     <SelectValue placeholder="Loại trigger" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1e293b] border-white/10 text-white rounded-xl">
+                         <SelectContent className="bg-[#1e293b] border-slate-700/50 text-white rounded-sm">
                     <SelectItem value="time">Theo giờ</SelectItem>
                     <SelectItem value="condition" disabled>Theo điều kiện</SelectItem>
                   </SelectContent>
@@ -217,7 +217,7 @@ export function AutomationDialog({
                     type="time"
                     value={trigger.value}
                     onChange={(e) => setTrigger({...trigger, value: e.target.value})}
-                    className="bg-white/5 border-white/10 rounded-xl h-9 font-semibold text-sm flex-1"
+                     className="bg-slate-800/40 border-slate-700/50 rounded-sm h-9 font-semibold text-xs flex-1"
                   />
                 )}
               </div>
@@ -228,20 +228,15 @@ export function AutomationDialog({
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <PlayCircle className="h-3.5 w-3.5 text-white/40" />
-                <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">
+                 <PlayCircle className="h-3.5 w-3.5 text-slate-400" />
+                 <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">
                   Hành động
-                  {actions.length > 0 && (
-                    <span className="ml-1.5 px-1.5 py-0.5 bg-white/10 rounded-md text-[9px] font-bold">
-                      {actions.length}
-                    </span>
-                  )}
                 </span>
               </div>
               <button 
                 onClick={addAction}
                 title="Thêm hành động"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 text-white/40 hover:bg-blue-500/10 hover:text-blue-400 transition-all text-[10px] uppercase tracking-wider font-bold"
+                className="flex items-center gap-1.5 pl-2.5 pr-4 py-1.5 rounded-sm bg-slate-800/40 text-slate-400 border border-slate-700/50 hover:bg-slate-700/50 hover:text-slate-200 transition-all text-[10px] uppercase tracking-wider font-bold"
               >
                 <Plus className="h-3 w-3" />
                 Thêm
@@ -251,28 +246,22 @@ export function AutomationDialog({
             <div className="space-y-2">
               {actions.length === 0 ? (
                 /* Empty State */
-                <div className="flex flex-col items-center justify-center py-10 rounded-xl bg-white/2 border border-dashed border-white/10">
+                 <div className="flex flex-col items-center justify-center py-10 rounded-xl bg-slate-800/10 border border-dashed border-slate-700/50">
                   <div className="p-3 rounded-xl bg-white/5 mb-3">
-                    <PlayCircle className="h-6 w-6 text-white/20" />
+                     <PlayCircle className="h-6 w-6 text-slate-600" />
                   </div>
-                  <p className="text-sm text-white/30 font-medium">Chưa có hành động nào</p>
+                  <p className="text-xs text-white/30 font-medium">Chưa có hành động nào</p>
                   <p className="text-[11px] text-white/15 mt-1">Nhấn &quot;Thêm&quot; để bắt đầu</p>
                 </div>
               ) : (
                 actions.map((action, idx) => (
                   <div 
-                    key={idx} 
-                    className="group/row relative flex flex-col gap-2.5 p-3.5 rounded-xl bg-white/5 hover:bg-white/[0.07] transition-all duration-300 border border-transparent hover:border-white/10"
+                    key={idx} className="group/row relative flex flex-col gap-2.5 p-3.5 rounded-sm bg-slate-800/50 hover:bg-slate-800/60 transition-all duration-300 border border-transparent hover:border-slate-700/50"
                   >
                     {/* Step indicator */}
-                    <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-blue-500/40 opacity-0 group-hover/row:opacity-100 transition-opacity" />
+                    <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-emerald-500/40 opacity-0 group-hover/row:opacity-100 transition-opacity" />
                     
                     <div className="flex gap-2 items-center">
-                      {/* Step number */}
-                      <span className="w-5 h-5 rounded-md bg-white/5 flex items-center justify-center text-[10px] font-bold text-white/30 shrink-0">
-                        {idx + 1}
-                      </span>
-
                       {/* Service Select */}
                       <Select 
                         value={action.service}
@@ -282,14 +271,14 @@ export function AutomationDialog({
                           setActions(newActions);
                         }}
                       >
-                        <SelectTrigger className="w-32 bg-white/5 border-white/10 rounded-lg h-9 text-sm font-medium">
+                         <SelectTrigger className="w-32 bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-xs font-medium">
                           <SelectValue placeholder="Lệnh">
                             <span className={serviceLabels[action.service]?.color}>
                               {serviceLabels[action.service]?.label || action.service}
                             </span>
                           </SelectValue>
                         </SelectTrigger>
-                        <SelectContent className="bg-[#1e293b] border-white/10 text-white rounded-xl">
+                        <SelectContent className="bg-[#1e293b] border-slate-700/50 text-white rounded-sm">
                           <SelectItem value="switch.turn_on">Bật (On)</SelectItem>
                           <SelectItem value="switch.turn_off">Tắt (Off)</SelectItem>
                           <SelectItem value="light.turn_on">Bật đèn</SelectItem>
@@ -304,10 +293,10 @@ export function AutomationDialog({
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn(
-                              "flex-1 justify-between bg-white/5 border-white/10 rounded-lg h-9 font-medium text-sm hover:bg-white/10 text-left px-3",
-                              !action.entity_id && "text-white/25"
-                            )}
+                             className={cn(
+                               "flex-1 justify-between bg-slate-800/40 border-slate-700/50 rounded-sm h-9 font-medium text-xs hover:bg-slate-700/50 text-left px-3",
+                               !action.entity_id && "text-slate-500"
+                             )}
                           >
                             <span className="truncate">
                               {action.entity_id 
@@ -317,9 +306,9 @@ export function AutomationDialog({
                             <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-72 p-0 bg-[#1e293b] border-white/10 rounded-xl overflow-hidden shadow-2xl">
+                         <PopoverContent className="w-72 p-0 bg-[#1e293b] border-slate-700/50 rounded-sm overflow-hidden shadow-2xl">
                           <Command className="bg-transparent text-white">
-                            <CommandInput placeholder="Tìm thiết bị..." className="text-white border-white/5 text-sm" />
+                             <CommandInput placeholder="Tìm thiết bị..." className="text-white border-slate-800/30 text-xs" />
                             <CommandList className="max-h-56 no-scrollbar">
                               <CommandEmpty>Không tìm thấy.</CommandEmpty>
                               <CommandGroup>
@@ -335,9 +324,9 @@ export function AutomationDialog({
                                     className="flex flex-col items-start gap-0.5 py-2.5 px-3 aria-selected:bg-white/10 cursor-pointer"
                                   >
                                     <div className="flex items-center w-full justify-between">
-                                      <span className="font-medium text-sm text-white">{device.name}</span>
+                                      <span className="font-medium text-xs text-white">{device.name}</span>
                                       {action.entity_id === device.entity_id && (
-                                        <Check className="h-3.5 w-3.5 text-blue-400" />
+                                        <Check className="h-3.5 w-3.5 text-emerald-400" />
                                       )}
                                     </div>
                                     <span className="text-[10px] text-white/40 font-mono">{device.entity_id}</span>
@@ -354,14 +343,14 @@ export function AutomationDialog({
                         <button 
                           onClick={() => runAction(action)}
                           title="Chạy thử"
-                          className="p-1.5 rounded-lg text-white/20 hover:bg-blue-500/10 transition-all"
+                          className="p-1.5 rounded-sm text-slate-300 hover:bg-amber-500/10 hover:text-amber-400 transition-all"
                         >
                           <Play className="h-3.5 w-3.5 fill-current" />
                         </button>
                         <button 
                           onClick={() => removeAction(idx)}
                           title="Xóa hành động"
-                          className="p-1.5 rounded-lg text-white/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                          className="p-1.5 rounded-sm text-rose-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -375,11 +364,11 @@ export function AutomationDialog({
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-between px-6 py-3 border-t border-white/5 bg-black/10">
+        <div className="flex items-center justify-between px-6 py-3 border-t border-white/5">
           <Button 
             variant="ghost" 
             onClick={() => onOpenChange(false)}
-            className="rounded-xl h-9 px-4 text-sm font-medium text-white/30 hover:text-white/60"
+            className="rounded-sm h-9 px-4 text-xs font-medium text-slate-500 hover:text-slate-900"
           >
             Hủy
           </Button>
@@ -388,7 +377,7 @@ export function AutomationDialog({
               <Button 
                 variant="outline"
                 onClick={runAllActions}
-                className="rounded-xl h-9 px-4 border-white/10 text-slate-900 hover:bg-white/5 hover:text-white text-sm font-medium"
+                className="text-xs rounded-sm h-9 px-4 bg-amber-500/5 border border-amber-500/20  hover:bg-amber-500/15 hover:text-amber-400 font-medium transition-all"
               >
                 <Play className="h-3.5 w-3.5 mr-1.5 fill-current" />
                 Chạy thử
@@ -396,7 +385,7 @@ export function AutomationDialog({
             )}
             <Button 
               onClick={handleSave}
-              className="rounded-xl h-9 px-5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 transition-all hover:shadow-blue-500/30"
+              className="rounded-sm h-9 px-5 bg-emerald-600/20  border border-emerald-500/30 hover:bg-emerald-600/30 hover:text-emerald-300 text-xs font-semibold shadow-lg shadow-emerald-500/10 transition-all hover:shadow-emerald-500/20"
             >
               Lưu kịch bản
             </Button>
