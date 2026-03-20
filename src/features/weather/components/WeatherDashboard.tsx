@@ -32,13 +32,14 @@ interface WeatherDashboardProps {
   initialDevices?: Device[];
 }
 
-export function WeatherDashboard({ initialData, initialAutomations }: WeatherDashboardProps) {
+export function WeatherDashboard({ initialData, initialAutomations, initialDevices }: WeatherDashboardProps) {
   const [data, setData] = useState<RealtimeWeather | null>(initialData?.realtime ?? null);
   const [past24h, setPast24h] = useState<HourlyWeather[]>(initialData?.past24h ?? []);
   const [daily, setDaily] = useState<DailyWeather[]>(initialData?.daily ?? []);
 
   // Automation states — sử dụng initial data từ server nếu có
   const [automations, setAutomations] = useState<Automation[]>(initialAutomations ?? []);
+  const [devices, setDevices] = useState<Device[]>(initialDevices ?? []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [dialogKey, setDialogKey] = useState(0);
@@ -53,13 +54,24 @@ export function WeatherDashboard({ initialData, initialAutomations }: WeatherDas
     }
   }, []);
 
+  const fetchDevices = useCallback(async () => {
+    try {
+      const res = await fetch("/api/home-assistant/devices");
+      const json = await res.json();
+      if (json.success) setDevices(json.data);
+    } catch (err) {
+      console.error("Lỗi fetch devices:", err);
+    }
+  }, []);
+
   useEffect(() => {
     const init = async () => {
       // Chỉ fetch nếu chưa có initial data từ server
       if (!initialAutomations?.length) await fetchAutomations();
+      if (!initialDevices?.length) await fetchDevices();
     };
     init();
-  }, [fetchAutomations, initialAutomations]);
+  }, [fetchAutomations, fetchDevices, initialAutomations, initialDevices]);
 
   const handleSaveAutomation = async (data: Partial<Automation>) => {
     try {
@@ -176,13 +188,14 @@ export function WeatherDashboard({ initialData, initialAutomations }: WeatherDas
     const dataTimer = setInterval(() => {
       refreshWeatherData();
       checkAutomations();
+      fetchDevices();
     }, 60000);
 
     // Chạy lần đầu
     checkAutomations();
 
     return () => clearInterval(dataTimer);
-  }, [refreshWeatherData, fetchAutomations]);
+  }, [refreshWeatherData, fetchAutomations, fetchDevices]);
 
   // Nếu không có initial data (fallback), fetch lần đầu từ client
   useEffect(() => {
@@ -265,6 +278,7 @@ export function WeatherDashboard({ initialData, initialAutomations }: WeatherDas
                   actions={automation.actions}
                   actions_when_matched={automation.actions_when_matched}
                   actions_when_unmatched={automation.actions_when_unmatched}
+                  devices={devices}
                   last_ran_at={automation.last_ran_at}
                   onToggle={handleToggleAutomation}
                   onDelete={handleDeleteAutomation}

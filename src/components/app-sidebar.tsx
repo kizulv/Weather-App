@@ -80,7 +80,7 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="border-r border-white/5 bg-[#0a0f1d]/60 backdrop-blur-3xl">
+<Sidebar className="z-40">
       <SidebarHeader className="p-8 pb-4">
         <div className="flex items-center gap-3.5 group cursor-default">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500/20 to-emerald-500/20 text-white border border-white/10 shadow-2xl transition-all duration-500 group-hover:scale-105 group-hover:border-blue-500/30">
@@ -167,7 +167,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="px-4 h-15 p-0 flex items-center justify-center bg-white/5 backdrop-blur-xl border-t border-white/5">
+      <SidebarFooter className="px-4 h-15 p-0 flex items-center justify-center bg-white/3 backdrop-blur-xl border-t border-white/0">
         <SidebarMenu className="w-full">
           <SidebarMenuItem>
             <DropdownMenu>

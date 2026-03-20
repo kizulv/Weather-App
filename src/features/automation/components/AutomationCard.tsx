@@ -5,8 +5,16 @@ import { Card } from "@/components/ui/card";
 import { Zap, Clock, Trash2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Action } from "@/features/automation/types/automation";
+import { Action, Device } from "@/features/automation/types/automation";
 import { resolveAutomationActionBranches } from "@/features/automation/server/action-branches";
+
+const serviceLabels: Record<string, { label: string; color: string }> = {
+  "switch.turn_on": { label: "Bật", color: "text-emerald-400" },
+  "switch.turn_off": { label: "Tắt", color: "text-red-400" },
+  "light.turn_on": { label: "Bật đèn", color: "text-amber-400" },
+  "light.turn_off": { label: "Tắt đèn", color: "text-red-400" },
+  "light.toggle": { label: "Đảo", color: "text-purple-400" },
+};
 
 interface AutomationCardProps {
   id: string;
@@ -16,6 +24,7 @@ interface AutomationCardProps {
   actions?: Action[];
   actions_when_matched?: Action[];
   actions_when_unmatched?: Action[];
+  devices?: Device[];
   last_ran_at?: string;
   onToggle: (id: string, enabled: boolean) => void;
   onClick: () => void;
@@ -31,6 +40,7 @@ export function AutomationCard({
   actions,
   actions_when_matched,
   actions_when_unmatched,
+  devices = [],
   last_ran_at,
   onToggle,
   onClick,
@@ -71,8 +81,21 @@ export function AutomationCard({
       actions_when_matched,
       actions_when_unmatched,
     });
-    if (matchedActions.length === 0 && unmatchedActions.length === 0) return "Trống";
-    return `Đạt: ${matchedActions.length} | Không đạt: ${unmatchedActions.length}`;
+    
+    // Ưu tiên hiển thị hành động đầu tiên của nhánh thỏa mãn
+    const mainAction = matchedActions[0] || unmatchedActions[0];
+    
+    if (!mainAction) return "Trống";
+    
+    const serviceInfo = serviceLabels[mainAction.service];
+    const serviceText = serviceInfo?.label || mainAction.service;
+    
+    const deviceName = devices.find(d => d.entity_id === mainAction.entity_id)?.name || mainAction.entity_id;
+    
+    const extraCount = matchedActions.length + unmatchedActions.length - 1;
+    const extraSuffix = extraCount > 0 ? ` (+${extraCount})` : "";
+    
+    return `${serviceText} ${deviceName}${extraSuffix}`;
   };
 
   const formatLastRan = (dateStr?: string) => {
