@@ -3,8 +3,6 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 export const metadata: Metadata = {
@@ -44,12 +42,7 @@ export default function RootLayout({
         
         <ThemeProvider>
           <TooltipProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              <main className="flex-1 relative z-10 min-w-0">
-                {children}
-              </main>
-            </SidebarProvider>
+            {children}
           </TooltipProvider>
         </ThemeProvider>
       </body>

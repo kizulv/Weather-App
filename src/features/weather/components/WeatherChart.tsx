@@ -10,7 +10,7 @@ import {
   CartesianGrid,
   LabelList,
 } from "recharts";
-import { HourlyWeather } from "@/lib/weather-data";
+import { HourlyWeather } from "@/features/weather/server/weather-data";
 import { formatWeatherValue } from "@/lib/utils";
 import { useSyncExternalStore } from "react";
 

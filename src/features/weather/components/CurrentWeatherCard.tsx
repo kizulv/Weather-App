@@ -4,7 +4,7 @@ import { Droplets, Zap, MapPin, Clock, LucideIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ConditionIcon } from "./ConditionIcon";
 import { formatWeatherValue, cn } from "@/lib/utils";
-import { conditionNames } from "@/lib/weather-data";
+import { conditionNames } from "@/features/weather/server/weather-data";
 
 interface Particle {
   id: number;

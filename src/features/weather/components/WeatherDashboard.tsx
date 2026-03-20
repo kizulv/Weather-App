@@ -5,22 +5,22 @@ import dynamic from "next/dynamic";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const WeatherChart = dynamic(
-  () => import("@/components/weather-chart").then((mod) => mod.WeatherChart),
+  () => import("./WeatherChart").then((mod) => mod.WeatherChart),
   { ssr: false, loading: () => <div className="h-87.5 w-full rounded-2xl border border-white/10 bg-black/20 animate-pulse" /> }
 );
 
-import { RealtimeWeather, HourlyWeather, DailyWeather } from "@/lib/weather-data";
+import { RealtimeWeather, HourlyWeather, DailyWeather } from "@/features/weather/server/weather-data";
 
 // New Components
-import { CurrentWeatherCard } from "@/components/weather/CurrentWeatherCard";
-import { DailyForecast } from "@/components/weather/DailyForecast";
-import { HourlyForecast } from "@/components/weather/HourlyForecast";
-import { AutomationCard } from "@/components/automation/AutomationCard";
-import { AutomationDialog } from "@/components/automation/AutomationDialog";
+import { CurrentWeatherCard } from "./CurrentWeatherCard";
+import { DailyForecast } from "./DailyForecast";
+import { HourlyForecast } from "./HourlyForecast";
+import { AutomationCard } from "@/features/automation/components/AutomationCard";
+import { AutomationDialog } from "@/features/automation/components/AutomationDialog";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Automation, Device } from "@/types/automation";
+import { Automation, Device } from "@/features/automation/types/automation";
 
 interface WeatherDashboardProps {
   initialData: {
@@ -32,7 +32,7 @@ interface WeatherDashboardProps {
   initialDevices?: Device[];
 }
 
-export function WeatherDashboard({ initialData, initialAutomations, initialDevices }: WeatherDashboardProps) {
+export function WeatherDashboard({ initialData, initialAutomations }: WeatherDashboardProps) {
   const [data, setData] = useState<RealtimeWeather | null>(initialData?.realtime ?? null);
   const [past24h, setPast24h] = useState<HourlyWeather[]>(initialData?.past24h ?? []);
   const [daily, setDaily] = useState<DailyWeather[]>(initialData?.daily ?? []);
@@ -42,7 +42,6 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [dialogKey, setDialogKey] = useState(0);
-  const [devices, setDevices] = useState<Device[]>(initialDevices ?? []);
 
   const fetchAutomations = useCallback(async () => {
     try {
@@ -58,18 +57,9 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
     const init = async () => {
       // Chỉ fetch nếu chưa có initial data từ server
       if (!initialAutomations?.length) await fetchAutomations();
-      if (!initialDevices?.length) {
-        try {
-          const res = await fetch("/api/home-assistant/devices");
-          const json = await res.json();
-          if (json.success) setDevices(json.data);
-        } catch (err) {
-          console.error("Lỗi fetch devices:", err);
-        }
-      }
     };
     init();
-  }, [fetchAutomations, initialAutomations, initialDevices]);
+  }, [fetchAutomations, initialAutomations]);
 
   const handleSaveAutomation = async (data: Partial<Automation>) => {
     try {
@@ -273,8 +263,9 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
                   enabled={automation.enabled}
                   trigger={automation.trigger}
                   actions={automation.actions}
+                  actions_when_matched={automation.actions_when_matched}
+                  actions_when_unmatched={automation.actions_when_unmatched}
                   last_ran_at={automation.last_ran_at}
-                  devices={devices}
                   onToggle={handleToggleAutomation}
                   onDelete={handleDeleteAutomation}
                   onRun={handleRunAutomation}

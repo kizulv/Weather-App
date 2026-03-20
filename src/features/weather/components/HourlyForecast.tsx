@@ -1,7 +1,7 @@
 "use client";
 
 import { ConditionIcon } from "./ConditionIcon";
-import { HourlyWeather, conditionNames } from "@/lib/weather-data";
+import { HourlyWeather, conditionNames } from "@/features/weather/server/weather-data";
 
 interface HourlyForecastProps {
   data: HourlyWeather[];

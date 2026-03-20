@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { KeyRound, Lock, User } from "lucide-react";
+import { APP_ROUTES } from "@/shared/constants/routes";
 
 // Schema đăng nhập
 const loginSchema = z.object({
@@ -53,7 +54,7 @@ export default function LoginPage() {
         description: "Đang chuyển hướng...",
       });
       
-      router.push("/");
+      router.push(APP_ROUTES.defaults.authenticated);
       router.refresh();
       
     } catch (error: unknown) {

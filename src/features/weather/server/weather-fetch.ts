@@ -1,6 +1,6 @@
 import { verifyToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
-import { DailyWeather } from "@/lib/weather-data";
+import { DailyWeather } from "./weather-data";
 
 // Cho phép server gọi API qua IP nội bộ thay vì qua domain công khai (tránh hairpin routing)
 const WEATHER_API_BASE = process.env.WEATHER_API_BASE_URL || "https://api.pcthanh.com";

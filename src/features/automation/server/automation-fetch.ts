@@ -1,5 +1,5 @@
 import clientPromise from "@/lib/mongodb";
-import { Automation, Device } from "@/types/automation";
+import { Automation, Device } from "@/features/automation/types/automation";
 
 /**
  * Đọc danh sách automations trực tiếp từ MongoDB.

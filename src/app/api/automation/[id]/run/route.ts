@@ -4,6 +4,13 @@ import { verifyToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
 import { ObjectId } from "mongodb";
 import { decrypt } from "@/lib/crypto";
+import {
+  MAX_CONDITION_HOURS,
+  evaluateConditionsWithDetails,
+  fetchMinuteWeatherHistoryByWindow,
+  getMaxRequiredHoursFromConditions,
+} from "@/features/automation/server/condition-evaluator";
+import { pickActionsByConditionMatch } from "@/features/automation/server/action-branches";
 
 /**
  * POST /api/automation/[id]/run
@@ -41,9 +48,36 @@ export async function POST(
     const haToken = decrypt(config.token);
     const haUrl = config.url.replace(/\/$/, "");
 
-    // 4. Thực thi các hành động
+    // 4. Đánh giá điều kiện (bỏ qua trigger khi chạy tay)
+    const now = new Date();
+    now.setSeconds(0, 0);
+    let weatherHistory = null;
+    const maxRequiredHours = getMaxRequiredHoursFromConditions(automation.conditions);
+    if (maxRequiredHours > 0) {
+      const lookbackHours = Math.min(MAX_CONDITION_HOURS, maxRequiredHours);
+      const windowStartMs = now.getTime() - lookbackHours * 60 * 60 * 1000;
+      weatherHistory = await fetchMinuteWeatherHistoryByWindow(
+        token,
+        windowStartMs,
+        now.getTime()
+      );
+    }
+
+    const conditionResult = evaluateConditionsWithDetails(
+      automation.conditions,
+      automation.condition_mode,
+      weatherHistory,
+      now.getTime()
+    );
+
+    const actionsToExecute = pickActionsByConditionMatch(
+      automation,
+      conditionResult.matched
+    );
+
+    // 5. Thực thi các hành động theo nhánh điều kiện
     const results = [];
-    for (const action of automation.actions) {
+    for (const action of actionsToExecute) {
       try {
         const [domain, serviceName] = action.service.split(".");
         const res = await fetch(`${haUrl}/api/services/${domain}/${serviceName}`, {
@@ -60,8 +94,7 @@ export async function POST(
       }
     }
 
-    // 5. Cập nhật thời gian chạy cuối
-    const now = new Date();
+    // 6. Cập nhật thời gian chạy cuối
     await db.collection("automations").updateOne(
       { _id: new ObjectId(id) },
       { $set: { last_ran_at: now } }
@@ -70,6 +103,7 @@ export async function POST(
     return NextResponse.json({ 
       success: true, 
       message: "Đã thực thi kịch bản", 
+      condition_matched: conditionResult.matched,
       results,
       last_ran_at: now 
     });

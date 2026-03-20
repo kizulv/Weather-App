@@ -3,12 +3,6 @@
 import * as React from "react"
 import {
   LayoutDashboard,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Thermometer,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  CloudRain,
-  Settings,
-  HelpCircle,
   Bell,
   LogOut,
   ChevronUp,
@@ -36,31 +30,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useRouter, usePathname } from "next/navigation"
-import { SettingsDialog } from "@/components/settings-dialog"
-
-const navMain = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
-    isActive: true,
-  },
-]
-
-const navSecondary = [
-  {
-    title: "Cài đặt",
-    url: "#",
-    icon: Settings,
-  },
-  {
-    title: "Trợ giúp",
-    url: "#",
-    icon: HelpCircle,
-  },
-]
-
-
+import { SettingsDialog } from "@/features/home-assistant/components/SettingsDialog"
+import {
+  sidebarMainNav,
+  sidebarSecondaryNav,
+  type SidebarNavItem,
+} from "@/shared/navigation/sidebar-nav"
 
 export function AppSidebar() {
   const router = useRouter()
@@ -68,8 +43,6 @@ export function AppSidebar() {
   const [user, setUser] = React.useState<{ name: string; role: string } | null>(null)
 
   React.useEffect(() => {
-    if (pathname === "/login") return
-
     // Đọc cookie user_info (non-httpOnly) chứa thông tin hiển thị
     try {
       const cookieStr = document.cookie
@@ -82,10 +55,13 @@ export function AppSidebar() {
     } catch (error) {
       console.error("Lỗi khi đọc thông tin người dùng:", error)
     }
-  }, [pathname])
+  }, [])
 
-  if (pathname === "/login") {
-    return null
+  const isNavItemActive = (item: SidebarNavItem) => {
+    if (item.matchMode === "exact") {
+      return pathname === item.url
+    }
+    return pathname === item.url || pathname.startsWith(`${item.url}/`)
   }
 
   const handleLogout = async () => {
@@ -125,26 +101,29 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-white/30 text-[10px] uppercase tracking-[0.2em] font-bold px-3 mb-2">Tổng quan</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-2">
-              {navMain.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild 
-                    isActive={item.isActive} 
-                    tooltip={item.title} 
-                    className={cn(
-                      "h-11 px-3 rounded-xl transition-all duration-200 group",
-                      item.isActive 
-                        ? "bg-white/10 text-white shadow-sm" 
-                        : "hover:bg-white/5 text-white/40 hover:text-white"
-                    )}
-                  >
-                    <a href={item.url} className="flex items-center gap-3">
-                      <item.icon className={cn("h-4 w-4", item.isActive ? "text-blue-400" : "text-white/40 group-hover:text-white/70")} />
-                      <span className="font-semibold tracking-tight text-sm">{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {sidebarMainNav.map((item) => {
+                const isActive = isNavItemActive(item)
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                      className={cn(
+                        "h-11 px-3 rounded-xl transition-all duration-200 group",
+                        isActive
+                          ? "bg-white/10 text-white shadow-sm"
+                          : "hover:bg-white/5 text-white/40 hover:text-white"
+                      )}
+                    >
+                      <a href={item.url} className="flex items-center gap-3">
+                        <item.icon className={cn("h-4 w-4", isActive ? "text-blue-400" : "text-white/40 group-hover:text-white/70")} />
+                        <span className="font-semibold tracking-tight text-sm">{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -153,9 +132,9 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-white/30 text-[10px] uppercase tracking-[0.2em] font-bold px-3 mb-2">Hỗ trợ</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-2">
-              {navSecondary.map((item) => (
+              {sidebarSecondaryNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  {item.title === "Cài đặt" ? (
+                  {item.key === "settings" ? (
                     <SettingsDialog>
                       <SidebarMenuButton 
                         size="default" 

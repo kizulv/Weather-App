@@ -4,7 +4,7 @@ import { verifyToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
 import { ObjectId } from "mongodb";
 
-import { Trigger, Action, Condition } from "@/types/automation";
+import { Trigger, Action, Condition } from "@/features/automation/types/automation";
 
 /**
  * PUT: Cập nhật automation
@@ -23,7 +23,16 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { name, trigger, conditions, actions, enabled } = body;
+    const {
+      name,
+      trigger,
+      conditions,
+      condition_mode,
+      actions,
+      actions_when_matched,
+      actions_when_unmatched,
+      enabled,
+    } = body;
 
     const client = await clientPromise;
     const db = client.db();
@@ -33,7 +42,10 @@ export async function PUT(
       name?: string;
       trigger?: Trigger;
       conditions?: Condition[];
+      condition_mode?: "all" | "any";
       actions?: Action[];
+      actions_when_matched?: Action[];
+      actions_when_unmatched?: Action[];
       enabled?: boolean;
     } = {
       updated_at: new Date(),
@@ -42,7 +54,18 @@ export async function PUT(
     if (name !== undefined) updateData.name = name;
     if (trigger !== undefined) updateData.trigger = trigger;
     if (conditions !== undefined) updateData.conditions = conditions;
-    if (actions !== undefined) updateData.actions = actions;
+    if (condition_mode !== undefined) updateData.condition_mode = condition_mode;
+    if (actions_when_matched !== undefined) {
+      updateData.actions_when_matched = actions_when_matched;
+      updateData.actions = actions_when_matched;
+    }
+    if (actions_when_unmatched !== undefined) {
+      updateData.actions_when_unmatched = actions_when_unmatched;
+    }
+    if (actions !== undefined && actions_when_matched === undefined) {
+      updateData.actions = actions;
+      updateData.actions_when_matched = actions;
+    }
     if (enabled !== undefined) updateData.enabled = enabled;
 
     const result = await db.collection("automations").updateOne(

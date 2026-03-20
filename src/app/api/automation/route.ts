@@ -3,7 +3,7 @@ import clientPromise from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
 
-import { Automation } from "@/types/automation";
+import { Automation } from "@/features/automation/types/automation";
 
 /**
  * GET: Lấy danh sách automations
@@ -44,20 +44,41 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { name, trigger, conditions, actions, enabled = true } = body;
+    const {
+      name,
+      trigger,
+      conditions,
+      condition_mode = "all",
+      actions_when_matched,
+      actions_when_unmatched,
+      actions,
+      enabled = true,
+    } = body;
 
-    if (!name || !trigger || !actions) {
+    if (!name || !trigger) {
       return NextResponse.json({ success: false, message: "Thiếu thông tin bắt buộc" }, { status: 400 });
     }
 
     const client = await clientPromise;
     const db = client.db();
 
+    const matchedActions = Array.isArray(actions_when_matched)
+      ? actions_when_matched
+      : Array.isArray(actions)
+        ? actions
+        : [];
+    const unmatchedActions = Array.isArray(actions_when_unmatched)
+      ? actions_when_unmatched
+      : [];
+
     const newAutomation: Omit<Automation, "_id" | "created_at" | "updated_at"> & { created_at: Date; updated_at: Date } = {
       name,
       trigger,
       conditions: conditions || [],
-      actions,
+      condition_mode,
+      actions: matchedActions,
+      actions_when_matched: matchedActions,
+      actions_when_unmatched: unmatchedActions,
       enabled,
       created_at: new Date(),
       updated_at: new Date(),

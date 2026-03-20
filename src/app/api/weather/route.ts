@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
-import { fetchWeatherData } from "@/lib/weather-fetch";
+import { fetchWeatherData } from "@/features/weather/server/weather-fetch";
 
 export async function GET() {
   // Xác thực token từ Cookie

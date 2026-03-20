@@ -1,7 +1,7 @@
 "use client";
 
 import { ConditionIcon } from "./ConditionIcon";
-import { DailyWeather, conditionNames } from "@/lib/weather-data";
+import { DailyWeather, conditionNames } from "@/features/weather/server/weather-data";
 import { formatWeatherValue } from "@/lib/utils";
 
 interface DailyForecastProps {

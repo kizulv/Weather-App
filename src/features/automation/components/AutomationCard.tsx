@@ -1,20 +1,22 @@
 "use client";
 
 import { Switch } from "@/components/ui/switch";
-import { Card } from "../ui/card";
+import { Card } from "@/components/ui/card";
 import { Zap, Clock, Trash2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { Device } from "@/types/automation";
+import { Action } from "@/features/automation/types/automation";
+import { resolveAutomationActionBranches } from "@/features/automation/server/action-branches";
 
 interface AutomationCardProps {
   id: string;
   name: string;
   enabled: boolean;
   trigger: { type: string; value: string };
-  actions: { service: string; entity_id: string }[];
+  actions?: Action[];
+  actions_when_matched?: Action[];
+  actions_when_unmatched?: Action[];
   last_ran_at?: string;
-  devices: Device[];
   onToggle: (id: string, enabled: boolean) => void;
   onClick: () => void;
   onDelete: (id: string) => void;
@@ -27,8 +29,9 @@ export function AutomationCard({
   enabled,
   trigger,
   actions,
+  actions_when_matched,
+  actions_when_unmatched,
   last_ran_at,
-  devices,
   onToggle,
   onClick,
   onDelete,
@@ -63,12 +66,13 @@ export function AutomationCard({
   };
 
   const getActionLabel = () => {
-    if (actions.length === 0) return "Trống";
-    const action = actions[0];
-    const serviceLabel = action.service.includes("turn_on") ? "Bật" : action.service.includes("toggle") ? "Đảo" : "Tắt";
-    const device = devices.find(d => d.entity_id === action.entity_id);
-    const deviceName = device?.name || action.entity_id.split(".")[1] || action.entity_id;
-    return `${serviceLabel} ${deviceName}`;
+    const { matchedActions, unmatchedActions } = resolveAutomationActionBranches({
+      actions,
+      actions_when_matched,
+      actions_when_unmatched,
+    });
+    if (matchedActions.length === 0 && unmatchedActions.length === 0) return "Trống";
+    return `Đạt: ${matchedActions.length} | Không đạt: ${unmatchedActions.length}`;
   };
 
   const formatLastRan = (dateStr?: string) => {
