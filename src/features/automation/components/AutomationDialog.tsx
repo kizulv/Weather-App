@@ -27,10 +27,10 @@ import {
   ConditionTestResult,
   getDefaultConditionValue,
   normalizeCondition,
-} from "./automation-dialog-condition"
-import { AutomationActionsSection } from "./AutomationActionsSection"
-import { AutomationConditionsSection } from "./AutomationConditionsSection"
-import { AutomationTriggerSection } from "./AutomationTriggerSection"
+} from "./conditions/AutomationConditionsSection"
+import { AutomationActionsSection } from "./actions/AutomationActionsSection"
+import { AutomationConditionsSection } from "./conditions/AutomationConditionsSection"
+import { AutomationTriggerSection } from "./triggers/AutomationTriggerSection"
 
 interface AutomationDialogProps {
   open: boolean

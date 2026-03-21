@@ -2,7 +2,6 @@
 
 import { Clock } from "lucide-react"
 
-import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -11,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Trigger } from "@/features/automation/types/automation"
+import { TriggerTime } from "./TriggerTime"
 
 interface TriggerSectionProps {
   trigger: Trigger
@@ -44,11 +44,9 @@ export function AutomationTriggerSection({
             </SelectContent>
           </Select>
           {trigger.type === "time" && (
-            <Input
-              type="time"
+            <TriggerTime
               value={trigger.value}
-              onChange={(e) => onTriggerChange({ ...trigger, value: e.target.value })}
-              className="bg-slate-800/40 border-slate-700/50 rounded-sm h-9 font-semibold text-xs w-full"
+              onChange={(value) => onTriggerChange({ ...trigger, value })}
             />
           )}
         </div>

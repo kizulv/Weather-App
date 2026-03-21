@@ -7,7 +7,7 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-*.env
+
 # testing
 /coverage
 
@@ -30,6 +30,8 @@ pnpm-debug.log*
 
 # env files
 .env*.local
+*.env
+.env
 
 # typescript
 *.tsbuildinfo

@@ -8,13 +8,7 @@ import { useState } from "react";
 import { Action, Device } from "@/features/automation/types/automation";
 import { resolveAutomationActionBranches } from "@/features/automation/server/action-branches";
 
-const serviceLabels: Record<string, { label: string; color: string }> = {
-  "switch.turn_on": { label: "Bật", color: "text-emerald-400" },
-  "switch.turn_off": { label: "Tắt", color: "text-red-400" },
-  "light.turn_on": { label: "Bật đèn", color: "text-amber-400" },
-  "light.turn_off": { label: "Tắt đèn", color: "text-red-400" },
-  "light.toggle": { label: "Đảo", color: "text-purple-400" },
-};
+import { serviceLabels } from "./shared/service-labels";
 
 interface AutomationCardProps {
   id: string;
