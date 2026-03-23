@@ -33,6 +33,7 @@ Repository này là một ứng dụng `Next.js 16 + React 19 + TypeScript + Tai
 - Button luôn có `rounded-sm`, `px-4 py-2`, và `transition-colors duration-200`; ưu tiên bảng màu tối và đồng nhất với giao diện hiện có.
 - Input và field của form luôn có `border border-gray-300`, `rounded-sm`, loại bỏ ring mặc định nếu không cần, và dùng `text-xs`.
 - Ưu tiên dùng các primitive hiện có trong `src/components/ui/**` thay vì tự dựng lại component mới.
+- Không sử dụng type `any` và `unknow`.
 
 ## Quy tắc frontend
 

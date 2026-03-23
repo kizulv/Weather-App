@@ -1,75 +1,55 @@
-import bcrypt from "bcryptjs";
-import { authRepository } from "./auth.repository";
-import { RegisterInput, LoginInput } from "./auth.schema";
-import { signToken } from "@/lib/auth/jwt";
+import { LoginInput } from "./auth.schema";
+import { apiClient } from "@/lib/api-client";
 
 export class AuthService {
-  async register(input: RegisterInput) {
-    const existingUser = await authRepository.findByEmail(input.email);
-    if (existingUser) {
-      throw new Error("EMAIL_EXISTS");
-    }
-
-    const passwordHash = await bcrypt.hash(input.password, 12);
-
-    const userId = await authRepository.createUser({
-      email: input.email,
-      passwordHash,
-      name: input.name,
-      role: input.role,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    return { id: userId, email: input.email, role: input.role };
-  }
-
   async login(input: LoginInput) {
-    const user = await authRepository.findByEmail(input.email);
-    if (!user || !user._id) {
-      throw new Error("INVALID_CREDENTIALS");
+    try {
+      const data = await apiClient<{
+        success: boolean;
+        message?: string;
+        user?: { id: string; email: string; name: string; role?: string };
+        token?: string;
+        data?: {
+          user?: { id: string | number; email: string; name: string; role?: string };
+          token?: string;
+        };
+      }>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify(input),
+      });
+
+      if (!data.success) {
+        throw new Error(data.message || "INVALID_CREDENTIALS");
+      }
+
+      if (!data.user) {
+        console.error("Login successful but 'user' object is missing in response!");
+        const dataPayload = data.data as Record<string, unknown> | undefined;
+        const userData = (dataPayload?.user as Record<string, unknown>) || dataPayload || {};
+        return {
+          user: {
+            id: String(userData.id || userData._id || "unknown"),
+            email: String(userData.email || input.email),
+            name: String(userData.name || "User"),
+            role: String(userData.role || "VIEWER"),
+          },
+          token: data.token || (dataPayload?.token as string | undefined),
+        };
+      }
+
+      return {
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+          role: data.user.role || "VIEWER",
+        },
+        token: data.token,
+      };
+    } catch (error) {
+      console.error("AuthService Login Error:", error);
+      throw error;
     }
-
-    const isPasswordValid = await bcrypt.compare(
-      input.password,
-      user.passwordHash,
-    );
-    if (!isPasswordValid) {
-      throw new Error("INVALID_CREDENTIALS");
-    }
-
-    const userId = user._id.toString();
-
-    const token = await signToken({
-      sub: userId,
-      email: user.email,
-      role: user.role,
-      name: user.name,
-    });
-
-    return {
-      user: {
-        id: userId,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-      token,
-    };
-  }
-
-  async getUserProfile(userId: string) {
-    const user = await authRepository.findById(userId);
-    if (!user) {
-      throw new Error("USER_NOT_FOUND");
-    }
-
-    return {
-      id: user._id?.toString(),
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    };
   }
 }
 

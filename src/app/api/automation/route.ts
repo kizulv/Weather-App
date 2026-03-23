@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
-
+import { apiClient } from "@/lib/api-client";
 import { Automation } from "@/features/automation/types/automation";
 
 /**
@@ -17,16 +16,12 @@ export async function GET() {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    const client = await clientPromise;
-    const db = client.db();
-    const automations = await db.collection("automations")
-      .find({})
-      .sort({ created_at: -1 })
-      .toArray();
-
-    return NextResponse.json({ success: true, data: automations });
+    // Gọi API ngoại thay vì MongoDB local
+    const response = await apiClient<{ success: boolean; data?: Automation[] }>("/automations", { method: "GET" }, token);
+ 
+    return NextResponse.json({ success: true, data: response.data || [] });
   } catch (error) {
-    console.error("Lỗi lấy danh sách automation:", error);
+    console.error("Lỗi lấy danh sách automation từ API:", error);
     return NextResponse.json({ success: false, message: "Lỗi hệ thống" }, { status: 500 });
   }
 }
@@ -44,56 +39,17 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const {
-      name,
-      trigger,
-      conditions,
-      condition_mode = "all",
-      actions_when_matched,
-      actions_when_unmatched,
-      actions,
-      enabled = true,
-    } = body;
-
-    if (!name || !trigger) {
-      return NextResponse.json({ success: false, message: "Thiếu thông tin bắt buộc" }, { status: 400 });
-    }
-
-    const client = await clientPromise;
-    const db = client.db();
-
-    const matchedActions = Array.isArray(actions_when_matched)
-      ? actions_when_matched
-      : Array.isArray(actions)
-        ? actions
-        : [];
-    const unmatchedActions = Array.isArray(actions_when_unmatched)
-      ? actions_when_unmatched
-      : [];
-
-    const newAutomation: Omit<Automation, "_id" | "created_at" | "updated_at"> & { created_at: Date; updated_at: Date } = {
-      name,
-      trigger,
-      conditions: conditions || [],
-      condition_mode,
-      actions: matchedActions,
-      actions_when_matched: matchedActions,
-      actions_when_unmatched: unmatchedActions,
-      enabled,
-      created_at: new Date(),
-      updated_at: new Date(),
-    };
-
-    const result = await db.collection("automations").insertOne(newAutomation);
-
-    return NextResponse.json({ 
-      success: true, 
-      message: "Tạo automation thành công", 
-      id: result.insertedId 
-    });
+    
+    // Gọi API ngoại để tạo automation
+    const response = await apiClient<{ success: boolean; message?: string; id?: string }>("/automations", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }, token);
+ 
+    return NextResponse.json(response);
 
   } catch (error) {
-    console.error("Lỗi tạo automation:", error);
+    console.error("Lỗi tạo automation tại API:", error);
     return NextResponse.json({ success: false, message: "Lỗi hệ thống" }, { status: 500 });
   }
 }

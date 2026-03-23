@@ -294,6 +294,7 @@ export function AutomationDialog({
 
   const handleSave = () => {
     if (!name.trim()) {
+      setIsEditingName(true);
       toast.error("Vui lòng nhập tên tự động hóa")
       return
     }

@@ -1,21 +1,15 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
-import { encrypt } from "@/lib/crypto";
+import { apiClient } from "@/lib/api-client";
 
 export async function POST(req: Request) {
-  // 1. Xác thực người dùng (giống như các API khác trong app)
+  // 1. Xác thực người dùng
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
 
-  if (!token) {
+  if (!token || !(await verifyToken(token))) {
     return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-  }
-
-  const payload = await verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ success: false, message: "Invalid or Expired Token" }, { status: 401 });
   }
 
   try {
@@ -25,83 +19,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Thiếu URL hoặc Token của Home Assistant" }, { status: 400 });
     }
 
-    // Đảm bảo URL không có dấu gạch chéo ở cuối để tránh lỗi fetch
-    const cleanUrl = url.replace(/\/$/, "");
+    // 2. Gọi API ngoại để lưu cấu hình
+    // Server ngoại sẽ tự kiểm tra kết nối HA trước khi lưu
+    const saveRes = await apiClient<{ 
+      success: boolean; 
+      message?: string; 
+      data?: Record<string, unknown> 
+    }>("/settings/home-assistant", {
+      method: "POST",
+      body: JSON.stringify({ url, token: haToken }), // Server ngoại mong đợi field 'token'
+    }, token);
 
-    // 2. Kiểm tra kết nối tới Home Assistant API
-    // Home Assistant cung cấp endpoint /api/states để lấy danh sách tất cả các thực thể
-    const haResponse = await fetch(`${cleanUrl}/api/states`, {
-      headers: {
-        Authorization: `Bearer ${haToken}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!haResponse.ok) {
-      const errorText = await haResponse.text();
-      console.error("Home Assistant API Error:", errorText);
-      return NextResponse.json({ 
-        success: false, 
-        message: `Kết nối thất bại: ${haResponse.status} ${haResponse.statusText}` 
-      }, { status: haResponse.status });
+    if (!saveRes.success) {
+      return NextResponse.json(saveRes, { status: 400 });
     }
 
-    const states = await haResponse.json();
-
-    if (!Array.isArray(states)) {
-      return NextResponse.json({ success: false, message: "Dữ liệu trả về từ Home Assistant không hợp lệ" }, { status: 500 });
-    }
-
-    const allowedPrefixes = ["switch.", "person.", "device_tracker.", "light."];
-    const filteredStates = states
-      .filter((entity: { entity_id: string }) => 
-        allowedPrefixes.some(prefix => entity.entity_id.startsWith(prefix))
-      )
-      .map((entity: { entity_id: string; attributes: { friendly_name?: string } }) => ({
-        entity_id: entity.entity_id,
-        name: entity.attributes.friendly_name || entity.entity_id
-      }));
-
-    const client = await clientPromise;
-    const db = client.db(); 
-
-    // 3. Lưu cấu hình vào table setting
-    const encryptedToken = encrypt(haToken);
-    await db.collection("setting").updateOne(
-      { type: "home_assistant" },
-      { 
-        $set: { 
-          url: cleanUrl, 
-          token: encryptedToken,
-          updated_at: new Date() 
-        } 
-      },
-      { upsert: true }
-    );
-
-    // 4. Lưu toàn bộ thiết bị vào 1 bản ghi duy nhất trong table home-assistant
-    await db.collection("home-assistant").deleteMany({}); // Xóa dữ liệu cũ
-    
-    if (filteredStates.length > 0) {
-      await db.collection("home-assistant").insertOne({
-        type: "device_list",
-        devices: filteredStates,
-        synced_at: new Date()
-      });
-    }
+    // 3. Gọi API ngoại để đồng bộ thiết bị ngay lập tức
+    const syncRes = await apiClient<{ 
+      success: boolean; 
+      message?: string; 
+      data?: Record<string, unknown> 
+    }>("/home-assistant/sync", {
+      method: "POST"
+    }, token);
 
     return NextResponse.json({ 
       success: true, 
-      message: `Kết nối thành công! Đã lưu cấu hình vào 'setting' và đồng bộ ${filteredStates.length} thiết bị vào 1 bản ghi duy nhất.`,
-      deviceCount: filteredStates.length 
+      message: "Kết nối và đồng bộ thành công qua API server!",
+      save_info: saveRes,
+      sync_info: syncRes
     });
 
   } catch (error) {
-    console.error("Lỗi khi kết nối tới Home Assistant:", error);
+    console.error("Lỗi khi kết nối tới Home Assistant qua API:", error);
     return NextResponse.json({ 
       success: false, 
-      message: "Lỗi hệ thống khi xử lý kết nối",
-      error: error instanceof Error ? error.message : "Unknown error"
+      message: "Lỗi hệ thống khi xử lý kết nối qua API",
     }, { status: 500 });
   }
 }

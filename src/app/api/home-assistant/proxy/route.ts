@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb";
 import { verifyToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
-import { decrypt } from "@/lib/crypto";
+import { apiClient } from "@/lib/api-client";
 
 /**
  * POST: Thực thi lệnh tới Home Assistant
@@ -25,27 +24,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, message: "Thiếu service hoặc entity_id" }, { status: 400 });
     }
 
-    // 2. Lấy cấu hình HA từ database
-    const client = await clientPromise;
-    const db = client.db();
-    const config = await db.collection("setting").findOne({ type: "home_assistant" });
+    // 2. Lấy cấu hình HA từ server ngoại
+    const configResponse = await apiClient<{ 
+      success: boolean; 
+      data?: { url: string; token: string } 
+    }>("/settings/home-assistant", { method: "GET" }, token);
+    const config = configResponse.data;
 
     if (!config || !config.url || !config.token) {
       return NextResponse.json({ success: false, message: "Chưa cấu hình Home Assistant" }, { status: 400 });
     }
 
-    // 3. Giải mã token
-    const haToken = decrypt(config.token);
+    // 3. Sử dụng token và url từ API ngoại
+    const haToken = config.token;
     const haUrl = config.url.replace(/\/$/, "");
 
     // 4. Gọi HA API
-    // Service trong HA thường có định dạng domain.service, ví dụ switch.turn_on
     const [domain, serviceName] = service.split(".");
     if (!domain || !serviceName) {
       return NextResponse.json({ success: false, message: "Định dạng service không hợp lệ (vd: switch.turn_on)" }, { status: 400 });
     }
 
-    const response = await fetch(`${haUrl}/api/services/${domain}/${serviceName}`, {
+    const haProxyResponse = await fetch(`${haUrl}/api/services/${domain}/${serviceName}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${haToken}`,
@@ -54,16 +54,16 @@ export async function POST(req: Request) {
       body: JSON.stringify({ entity_id }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.text();
+    if (!haProxyResponse.ok) {
+      const errorData = await haProxyResponse.text();
       console.error("HA Proxy Error:", errorData);
       return NextResponse.json({ 
         success: false, 
-        message: `Lỗi từ Home Assistant: ${response.statusText}` 
-      }, { status: response.status });
+        message: `Lỗi từ Home Assistant: ${haProxyResponse.statusText}` 
+      }, { status: haProxyResponse.status });
     }
 
-    const result = await response.json();
+    const result = await haProxyResponse.json() as Record<string, unknown>[];
 
     return NextResponse.json({ 
       success: true, 

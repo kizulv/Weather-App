@@ -1,42 +1,41 @@
-import clientPromise from "@/lib/mongodb";
+import { cookies } from "next/headers";
 import { Automation, Device } from "@/features/automation/types/automation";
+import { apiClient } from "@/lib/api-client";
 
 /**
- * Đọc danh sách automations trực tiếp từ MongoDB.
- * Dùng trong Server Component — tránh gọi qua API route (tránh overhead HTTP).
+ * Đọc danh sách automations từ API ngoại.
+ * Dùng trong Server Component.
  */
 export async function getAutomationsFromDB(): Promise<Automation[]> {
   try {
-    const client = await clientPromise;
-    const db = client.db();
-    const automations = await db.collection("automations")
-      .find({})
-      .sort({ created_at: -1 })
-      .toArray();
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value;
 
-    // Chuyển _id sang string để serialize qua RSC payload
-    return automations.map(doc => ({
-      ...doc,
-      _id: doc._id.toString(),
-    })) as unknown as Automation[];
+    if (!token) return [];
+
+    const response = await apiClient<{ success: boolean; data?: Automation[] }>("/automations", { method: "GET" }, token);
+    return response.data || [];
   } catch (error) {
-    console.error("Lỗi đọc automations từ DB:", error);
+    console.error("Lỗi đọc automations từ API:", error);
     return [];
   }
 }
 
 /**
- * Đọc danh sách devices trực tiếp từ MongoDB.
- * Dùng trong Server Component — tránh gọi qua API route.
+ * Đọc danh sách devices từ API ngoại.
+ * Dùng trong Server Component.
  */
 export async function getDevicesFromDB(): Promise<Device[]> {
   try {
-    const client = await clientPromise;
-    const db = client.db();
-    const deviceListDoc = await db.collection("home-assistant").findOne({ type: "device_list" });
-    return deviceListDoc ? (deviceListDoc.devices as Device[]) : [];
+    const cookieStore = await cookies();
+    const token = cookieStore.get("auth_token")?.value;
+
+    if (!token) return [];
+
+    const response = await apiClient<{ success: boolean; data?: Device[] }>("/home-assistant/devices", { method: "GET" }, token);
+    return response.data || [];
   } catch (error) {
-    console.error("Lỗi đọc devices từ DB:", error);
+    console.error("Lỗi đọc devices từ API:", error);
     return [];
   }
 }
