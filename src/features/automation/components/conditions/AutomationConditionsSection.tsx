@@ -10,10 +10,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { Condition, ConditionMode, ConditionOperator, ConditionType, NumericWindowConditionValue } from "@/features/automation/types/automation"
+import { Condition, ConditionMode, ConditionOperator, ConditionType, Device, LastStateDeviceConditionValue, NumericWindowConditionValue } from "@/features/automation/types/automation"
 
 import { ConditionAverageTemperature } from "./ConditionAverageTemperature"
 import { ConditionSunshineHours } from "./ConditionSunshineHours"
+import { ConditionLastStateDevice } from "./LastStateDeviceCondition"
 
 // --- Constants ---
 export const MAX_CONDITION_HOURS = 24
@@ -47,6 +48,14 @@ export const CONDITION_CONFIG: Record<
     thresholdStep: "1",
     thresholdSuffix: "giờ",
   },
+  last_state_device: {
+    label: "Trạng thái thiết bị",
+    defaultHours: 0,
+    defaultThreshold: 0,
+    thresholdLabel: "",
+    thresholdStep: "1",
+    thresholdSuffix: "",
+  },
 }
 
 export const CONDITION_MODE_OPTIONS: Array<{ value: ConditionMode; label: string }> = [
@@ -78,7 +87,9 @@ export function toFiniteNumber(value: unknown, fallback: number) {
 }
 
 export function resolveConditionType(type: unknown): ConditionType {
-  return type === "sunshine_hours" ? "sunshine_hours" : "average_temperature"
+  if (type === "sunshine_hours") return "sunshine_hours"
+  if (type === "last_state_device") return "last_state_device"
+  return "average_temperature"
 }
 
 export function resolveOperator(operator: unknown): ConditionOperator {
@@ -86,8 +97,16 @@ export function resolveOperator(operator: unknown): ConditionOperator {
   return ">="
 }
 
-export function getDefaultConditionValue(type: ConditionType): NumericWindowConditionValue {
+export function getDefaultConditionValue(type: ConditionType): NumericWindowConditionValue | LastStateDeviceConditionValue {
   const config = CONDITION_CONFIG[type]
+  if (type === "last_state_device") {
+    return {
+      entity_id: "",
+      state: "on",
+      match: "is_not",
+      minutes: 120,
+    }
+  }
   return {
     hours: config.defaultHours,
     operator: ">=",
@@ -104,12 +123,28 @@ export function normalizeCondition(condition?: Condition): Condition {
 
   const defaultValue = getDefaultConditionValue(type)
 
+  if (type === "last_state_device") {
+    const v = rawValue as Partial<LastStateDeviceConditionValue>
+    const d = defaultValue as LastStateDeviceConditionValue
+    return {
+      type,
+      value: {
+        entity_id: v.entity_id || d.entity_id,
+        state: v.state || d.state,
+        match: v.match || d.match,
+        minutes: toFiniteNumber(v.minutes, d.minutes),
+      },
+    }
+  }
+
+  const v = rawValue as Partial<NumericWindowConditionValue>
+  const d = defaultValue as NumericWindowConditionValue
   return {
     type,
     value: {
-      hours: clampHours(toFiniteNumber(rawValue.hours, defaultValue.hours)),
-      operator: resolveOperator(rawValue.operator),
-      threshold: toFiniteNumber(rawValue.threshold, defaultValue.threshold),
+      hours: clampHours(toFiniteNumber(v.hours, d.hours)),
+      operator: resolveOperator(v.operator),
+      threshold: toFiniteNumber(v.threshold, d.threshold),
     },
   }
 }
@@ -120,11 +155,17 @@ export interface ConditionTestItem {
   hours: number
   operator: ConditionOperator
   threshold: number
-  actual: number | null
+  actual: number | string | null
   passed: boolean
   sampleCount: number
   windowStartMs: number
   windowEndMs: number
+  // Fields for last_state_device
+  entity_id?: string
+  target_state?: string
+  match_type?: string
+  minutes?: number
+  last_occurrence_at?: number
 }
 
 export interface ConditionTestResult {
@@ -137,14 +178,24 @@ export interface ConditionTestResult {
 }
 
 // --- Sub-components ---
-function ConditionTestResultDisplay({ result }: { result: ConditionTestResult }) {
+function ConditionTestResultDisplay({ result, devices }: { result: ConditionTestResult, devices: Device[] }) {
   const formatConditionActual = (item: ConditionTestItem) => {
     if (item.actual === null) return "Không có dữ liệu"
-    if (item.type === "average_temperature") return `${item.actual.toFixed(2)}°C`
-    return `${item.actual.toFixed(2)} giờ`
+    if (item.type === "last_state_device") return item.passed ? "Đúng" : "Sai"
+    if (typeof item.actual === "number") {
+      if (item.type === "average_temperature") return `${item.actual.toFixed(2)}°C`
+      return `${item.actual.toFixed(2)} giờ`
+    }
+    return String(item.actual)
   }
 
   const formatConditionThreshold = (item: ConditionTestItem) => {
+    if (item.type === "last_state_device") {
+      const deviceName = devices.find(d => d.entity_id === item.entity_id)?.name || item.entity_id
+      const matchLabel = item.match_type === "is" ? "phải" : "không được"
+      const stateLabel = item.target_state === "on" ? "Bật" : "Tắt"
+      return `${deviceName} ${matchLabel} ${stateLabel}`
+    }
     const suffix = CONDITION_CONFIG[item.type]?.thresholdSuffix || ""
     return `${item.operator} ${item.threshold}${suffix}`
   }
@@ -174,7 +225,13 @@ function ConditionTestResultDisplay({ result }: { result: ConditionTestResult })
             <span className={cn("text-[10px] font-bold uppercase tracking-wider", item.passed ? "text-emerald-300" : "text-rose-300")}>{item.passed ? "Đạt" : "Không đạt"}</span>
           </div>
           <p className="mt-1 text-[11px] text-white/60">Thực tế: {formatConditionActual(item)} | Mục tiêu: {formatConditionThreshold(item)}</p>
-          <p className="text-[11px] text-white/40">Cửa sổ: {formatWindowLabel(item)} | Số mẫu: {item.sampleCount}</p>
+          <p className="text-[11px] text-white/60">Thời gian: từ {formatWindowLabel(item)} {item.type === "last_state_device" ? "" : `| Số mẫu: ${item.sampleCount}`} 
+          {item.type === "last_state_device" && item.last_occurrence_at && (
+            <>
+              | {item.target_state === "on" ? "Bật" : "Tắt"} gần nhất lúc {new Date(item.last_occurrence_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </>
+          )}
+          </p>
         </div>
       ))}
     </div>
@@ -184,6 +241,7 @@ function ConditionTestResultDisplay({ result }: { result: ConditionTestResult })
 // --- Main component ---
 interface AutomationConditionsSectionProps {
   conditions: Condition[]
+  devices: Device[]
   conditionMode: ConditionMode
   isTestingConditions: boolean
   conditionTestResult: ConditionTestResult | null
@@ -196,6 +254,7 @@ interface AutomationConditionsSectionProps {
 
 export function AutomationConditionsSection({
   conditions,
+  devices,
   conditionMode,
   isTestingConditions,
   conditionTestResult,
@@ -237,7 +296,7 @@ export function AutomationConditionsSection({
           <SelectTrigger className="h-9 w-full rounded-sm border-slate-700/50 bg-slate-800/40 text-xs font-medium">
             <SelectValue placeholder="Chọn cách đánh giá" />
           </SelectTrigger>
-          <SelectContent className="rounded-sm border-slate-700/50 bg-[#1e293b] text-white">
+          <SelectContent className="rounded-sm border-slate-700/50 bg-[#1e293b] text-xs text-white">
             {CONDITION_MODE_OPTIONS.map((option) => (
               <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
             ))}
@@ -259,7 +318,7 @@ export function AutomationConditionsSection({
                   key={idx}
                   condition={condition}
                   onRemove={() => onRemoveCondition(idx)}
-                  onUpdate={(next) => onUpdateCondition(idx, next)}
+                  onUpdate={(next: Condition) => onUpdateCondition(idx, next)}
                 />
               )
             }
@@ -269,7 +328,18 @@ export function AutomationConditionsSection({
                   key={idx}
                   condition={condition}
                   onRemove={() => onRemoveCondition(idx)}
-                  onUpdate={(next) => onUpdateCondition(idx, next)}
+                  onUpdate={(next: Condition) => onUpdateCondition(idx, next)}
+                />
+              )
+            }
+            if (type === "last_state_device") {
+              return (
+                <ConditionLastStateDevice
+                  key={idx}
+                  condition={condition}
+                  devices={devices}
+                  onRemove={() => onRemoveCondition(idx)}
+                  onUpdate={(next: Condition) => onUpdateCondition(idx, next)}
                 />
               )
             }
@@ -278,7 +348,7 @@ export function AutomationConditionsSection({
         )}
       </div>
 
-      {conditionTestResult && <ConditionTestResultDisplay result={conditionTestResult} />}
+      {conditionTestResult && <ConditionTestResultDisplay result={conditionTestResult} devices={devices} />}
     </div>
   )
 }

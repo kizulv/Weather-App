@@ -112,7 +112,7 @@ export function ActionDevice({
               </Button>
             </PopoverTrigger>
             <PopoverContent 
-              className="sm:w-80 sm:mt-3 p-0 bg-transparent border-slate-900/10 rounded-sm shadow-2xl backdrop-blur-sm overflow-hidden"
+              className="sm:w-80 p-0 bg-transparent border-slate-900/10 rounded-sm shadow-2xl backdrop-blur-sm overflow-hidden"
               onWheel={(e) => e.stopPropagation()}
             >
               <Command className="bg-transparent text-white h-auto overflow-visible">

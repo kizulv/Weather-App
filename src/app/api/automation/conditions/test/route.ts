@@ -4,9 +4,12 @@ import { verifyToken } from "@/lib/auth/jwt"
 import {
   MAX_CONDITION_HOURS,
   evaluateConditionsWithDetails,
+  fetchHAHistory,
   fetchMinuteWeatherHistoryByWindow,
   getMaxRequiredHoursFromConditions,
 } from "@/features/automation/server/condition-evaluator"
+import { apiClient } from "@/lib/api-client"
+import { Condition, LastStateDeviceConditionValue } from "@/features/automation/types/automation"
 
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000
 
@@ -100,16 +103,46 @@ export async function POST(req: Request) {
     const windowEndMs = resolveWindowEndByTrigger(now, rawTrigger)
     const lookbackHours = Math.min(MAX_CONDITION_HOURS, maxRequiredHours)
     const windowStartMs = windowEndMs - lookbackHours * 60 * 60 * 1000
+
+    // Fetch Weather History
     const weatherHistory = await fetchMinuteWeatherHistoryByWindow(
       token,
       windowStartMs,
       windowEndMs
     )
 
+    // Fetch Device Histories if needed
+    const deviceHistories: Record<string, import("@/features/automation/server/condition-evaluator").DeviceStateSample[]> = {}
+    const lastStateConditions = (rawConditions as Condition[] || []).filter(c => c.type === "last_state_device")
+
+    if (lastStateConditions.length > 0) {
+      const configRes = await apiClient<{ success: boolean; data?: { url: string; token: string } }>("/settings/home-assistant", { method: "GET" }, token)
+      const config = configRes.data
+      
+      if (config?.url && config?.token) {
+        await Promise.all(lastStateConditions.map(async (c) => {
+          const val = c.value as LastStateDeviceConditionValue
+          if (val.entity_id && !deviceHistories[val.entity_id]) {
+            // Lấy thêm 1 chút thời gian trước windowStart của condition để có initialState
+            const conditionStartMs = windowEndMs - val.minutes * 60 * 1000
+            const history = await fetchHAHistory(
+              config.url,
+              config.token,
+              val.entity_id,
+              conditionStartMs - 5 * 60 * 1000, // Thêm 5p dự phòng để lấy state trước đó
+              windowEndMs
+            )
+            deviceHistories[val.entity_id] = history
+          }
+        }))
+      }
+    }
+
     const conditionResult = evaluateConditionsWithDetails(
       rawConditions,
       rawConditionMode,
       weatherHistory,
+      deviceHistories,
       windowEndMs
     )
 

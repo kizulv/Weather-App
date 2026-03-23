@@ -19,6 +19,7 @@ import {
   Condition,
   ConditionMode,
   Device,
+  LastStateDeviceConditionValue,
   NumericWindowConditionValue,
   Trigger,
 } from "@/features/automation/types/automation"
@@ -69,7 +70,7 @@ export function AutomationDialog({
     automation?.trigger || { type: "time", value: "08:00" }
   )
   const [conditions, setConditions] = useState<Condition[]>(
-    automation?.conditions?.map((condition) => normalizeCondition(condition)) || []
+    automation?.conditions?.map((condition: Condition) => normalizeCondition(condition)) || []
   )
   const [conditionMode, setConditionMode] = useState<ConditionMode>(
     automation?.condition_mode === "any" ? "any" : "all"
@@ -90,7 +91,7 @@ export function AutomationDialog({
     if (open) {
       setName(automation?.name || "")
       setTrigger(automation?.trigger || { type: "time", value: "08:00" })
-      setConditions(automation?.conditions?.map((condition) => normalizeCondition(condition)) || [])
+      setConditions(automation?.conditions?.map((condition: Condition) => normalizeCondition(condition)) || [])
       setConditionMode(automation?.condition_mode === "any" ? "any" : "all")
       setActionsWhenMatched(getInitialMatchedActions(automation))
       setActionsWhenUnmatched(getInitialUnmatchedActions(automation))
@@ -319,6 +320,10 @@ export function AutomationDialog({
 
     const normalizedConditions = conditions.map(normalizeCondition)
     const hasInvalidCondition = normalizedConditions.some((condition) => {
+      if (condition.type === "last_state_device") {
+        const value = condition.value as LastStateDeviceConditionValue
+        return !value.entity_id || !Number.isFinite(value.minutes)
+      }
       const value = condition.value as NumericWindowConditionValue
       return !Number.isFinite(value.hours) || !Number.isFinite(value.threshold)
     })
@@ -401,6 +406,7 @@ export function AutomationDialog({
 
           <AutomationConditionsSection
             conditions={conditions}
+            devices={devices}
             conditionMode={conditionMode}
             isTestingConditions={isTestingConditions}
             conditionTestResult={conditionTestResult}

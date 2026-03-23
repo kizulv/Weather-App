@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     const cookieStore = await cookies();
     cookieStore.set({
       name: "auth_token",
-      value: result.token,
+      value: result.token as string,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

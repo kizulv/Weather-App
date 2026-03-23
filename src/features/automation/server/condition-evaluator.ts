@@ -3,6 +3,7 @@ import {
   ConditionMode,
   ConditionOperator,
   ConditionType,
+  LastStateDeviceConditionValue,
   NumericWindowConditionValue,
 } from "@/features/automation/types/automation"
 
@@ -21,6 +22,11 @@ export type WeatherSample = {
   lightIntensity: number
 }
 
+export type DeviceStateSample = {
+  state: string
+  last_changed: number // timestamp in ms
+}
+
 type ExternalMinuteWeatherData = {
   timestamp: number
   temperature: number
@@ -35,20 +41,28 @@ type ExternalMinuteWeatherResponse = {
 type EvaluableCondition = {
   index: number
   type: ConditionType
-  value: NumericWindowConditionValue
+  value: NumericWindowConditionValue | LastStateDeviceConditionValue
 }
 
 export interface ConditionEvaluationItem {
   index: number
   type: ConditionType
-  hours: number
-  operator: ConditionOperator
-  threshold: number
-  actual: number | null
+  label?: string
+  actual: number | string | null
   passed: boolean
   sampleCount: number
   windowStartMs: number
   windowEndMs: number
+  // Metadata for different types
+  hours?: number
+  operator?: ConditionOperator
+  threshold?: number
+  entity_id?: string
+  entity_name?: string
+  target_state?: string
+  match_type?: string
+  minutes?: number
+  last_occurrence_at?: number
 }
 
 export interface ConditionEvaluationSummary {
@@ -59,7 +73,7 @@ export interface ConditionEvaluationSummary {
 }
 
 function resolveConditionType(type: unknown): ConditionType | null {
-  if (type === "average_temperature" || type === "sunshine_hours") return type
+  if (type === "average_temperature" || type === "sunshine_hours" || type === "last_state_device") return type
   return null
 }
 
@@ -82,10 +96,25 @@ function toFiniteNumber(value: unknown): number | null {
 }
 
 function parseConditionValue(
-  rawValue: unknown
-): NumericWindowConditionValue | null {
+  rawValue: unknown,
+  type: ConditionType
+): NumericWindowConditionValue | LastStateDeviceConditionValue | null {
   if (!rawValue || typeof rawValue !== "object") return null
-  const candidate = rawValue as Partial<NumericWindowConditionValue>
+  const candidate = rawValue as Record<string, unknown>
+
+  if (type === "last_state_device") {
+    const rawMinutes = toFiniteNumber(candidate.minutes)
+    if (rawMinutes === null || rawMinutes < 1 || !candidate.entity_id || !candidate.state || !candidate.match) {
+      return null
+    }
+    return {
+      entity_id: candidate.entity_id as string,
+      match: candidate.match as "is" | "is_not",
+      state: candidate.state as string,
+      minutes: Math.max(1, Math.round(rawMinutes))
+    }
+  }
+
   const rawHours = toFiniteNumber(candidate.hours)
   const rawThreshold = toFiniteNumber(candidate.threshold)
   const operator = resolveOperator(candidate.operator)
@@ -111,7 +140,7 @@ function toEvaluableCondition(
   const type = resolveConditionType(condition.type)
   if (!type) return null
 
-  const value = parseConditionValue(condition.value)
+  const value = parseConditionValue(condition.value, type)
   if (!value) return null
 
   return { index, type, value }
@@ -141,17 +170,59 @@ function filterWindowSamples(
 function buildEvaluationItem(
   condition: EvaluableCondition,
   weatherHistory: WeatherSample[] | null,
+  deviceHistories: Record<string, DeviceStateSample[]> | null,
   windowEndMs: number
 ): ConditionEvaluationItem {
-  const windowStartMs = windowEndMs - condition.value.hours * HOUR_MS
+  if (condition.type === "last_state_device") {
+    const val = condition.value as LastStateDeviceConditionValue
+    const windowStartMs = windowEndMs - val.minutes * MINUTE_MS
+    const history = deviceHistories?.[val.entity_id] || []
+    
+    // Logic: Kiểm tra xem trạng thái mục tiêu có xuất hiện trong khoảng thời gian không
+    // Lưu ý: Cần tính cả trạng thái của sample ngay trước windowStartMs
+    const samplesInWindow = history.filter(s => s.last_changed >= windowStartMs && s.last_changed < windowEndMs)
+    
+    // Tìm trạng thái tại thời điểm bắt đầu window (trạng thái gần nhất trước hoặc bằng windowStartMs)
+    const priorSamples = history.filter(s => s.last_changed < windowStartMs).sort((a,b) => b.last_changed - a.last_changed)
+    const initialState = priorSamples[0]?.state || null
+    
+    const statesOccurred = new Set<string>()
+    if (initialState) statesOccurred.add(initialState)
+    samplesInWindow.forEach(s => statesOccurred.add(s.state))
+    
+    const hasTargetState = statesOccurred.has(val.state)
+    const passed = val.match === "is" ? hasTargetState : !hasTargetState
+    
+    // Tìm thời điểm gần nhất có trạng thái này (có thể trong window hoặc trước đó)
+    const targetSamples = history.filter(s => s.state === val.state).sort((a,b) => b.last_changed - a.last_changed)
+    const lastOccurrenceAt = targetSamples[0]?.last_changed || (initialState === val.state ? priorSamples[0]?.last_changed : undefined)
+
+    return {
+      index: condition.index,
+      type: condition.type,
+      entity_id: val.entity_id,
+      target_state: val.state,
+      match_type: val.match,
+      minutes: val.minutes,
+      actual: hasTargetState ? val.state : (initialState || "unknown"),
+      passed,
+      sampleCount: samplesInWindow.length,
+      windowStartMs,
+      windowEndMs,
+      last_occurrence_at: lastOccurrenceAt
+    }
+}
+
+  const val = condition.value as NumericWindowConditionValue
+  const windowStartMs = windowEndMs - val.hours * HOUR_MS
 
   if (!weatherHistory || weatherHistory.length === 0) {
     return {
       index: condition.index,
       type: condition.type,
-      hours: condition.value.hours,
-      operator: condition.value.operator,
-      threshold: condition.value.threshold,
+      hours: val.hours,
+      operator: val.operator,
+      threshold: val.threshold,
       actual: null,
       passed: false,
       sampleCount: 0,
@@ -162,7 +233,7 @@ function buildEvaluationItem(
 
   const weatherWindow = filterWindowSamples(
     weatherHistory,
-    condition.value.hours,
+    val.hours,
     windowEndMs
   )
 
@@ -170,9 +241,9 @@ function buildEvaluationItem(
     return {
       index: condition.index,
       type: condition.type,
-      hours: condition.value.hours,
-      operator: condition.value.operator,
-      threshold: condition.value.threshold,
+      hours: val.hours,
+      operator: val.operator,
+      threshold: val.threshold,
       actual: null,
       passed: false,
       sampleCount: 0,
@@ -188,14 +259,14 @@ function buildEvaluationItem(
     return {
       index: condition.index,
       type: condition.type,
-      hours: condition.value.hours,
-      operator: condition.value.operator,
-      threshold: condition.value.threshold,
+      hours: val.hours,
+      operator: val.operator,
+      threshold: val.threshold,
       actual,
       passed: compareWithOperator(
         actual,
-        condition.value.operator,
-        condition.value.threshold
+        val.operator,
+        val.threshold
       ),
       sampleCount: weatherWindow.length,
       windowStartMs,
@@ -203,20 +274,21 @@ function buildEvaluationItem(
     }
   }
 
+  // Sunshine hours
   const actual =
     weatherWindow.filter((item) => item.lightIntensity > SUNLIGHT_THRESHOLD).length /
     60
   return {
     index: condition.index,
     type: condition.type,
-    hours: condition.value.hours,
-    operator: condition.value.operator,
-    threshold: condition.value.threshold,
+    hours: val.hours,
+    operator: val.operator,
+    threshold: val.threshold,
     actual,
     passed: compareWithOperator(
       actual,
-      condition.value.operator,
-      condition.value.threshold
+      val.operator,
+      val.threshold
     ),
     sampleCount: weatherWindow.length,
     windowStartMs,
@@ -233,10 +305,15 @@ export function getMaxRequiredHoursFromConditions(rawConditions: unknown) {
     )
 
   if (evaluableConditions.length === 0) return 0
-  return evaluableConditions.reduce(
-    (max, condition) => Math.max(max, condition.value.hours),
-    0
-  )
+  
+  return evaluableConditions.reduce((max, condition) => {
+    if (condition.type === "last_state_device") {
+      const val = condition.value as LastStateDeviceConditionValue
+      return Math.max(max, val.minutes / 60)
+    }
+    const val = condition.value as NumericWindowConditionValue
+    return Math.max(max, val.hours)
+  }, 0)
 }
 
 export function getMaxRequiredHoursFromAutomations(automations: unknown[]) {
@@ -370,10 +447,46 @@ export async function fetchMinuteWeatherHistoryByWindow(
     .sort((a, b) => a.timestampMs - b.timestampMs)
 }
 
+export async function fetchHAHistory(
+  haUrl: string,
+  haToken: string,
+  entityId: string,
+  startMs: number,
+  endMs: number
+): Promise<DeviceStateSample[]> {
+  const startTime = new Date(startMs).toISOString()
+  const endTime = new Date(endMs).toISOString()
+  
+  const url = `${haUrl.replace(/\/$/, "")}/api/history/period/${startTime}?filter_entity_id=${entityId}&end_time=${endTime}`
+  
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${haToken}`,
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    throw new Error(`Home Assistant history API error: ${res.status}`)
+  }
+
+  const data = (await res.json()) as Array<Array<{ state: string; last_changed: string }>>
+  if (!Array.isArray(data) || data.length === 0 || !Array.isArray(data[0])) {
+    return []
+  }
+
+  return data[0].map((item) => ({
+    state: item.state,
+    last_changed: new Date(item.last_changed).getTime(),
+  }))
+}
+
 export function evaluateConditionsWithDetails(
   rawConditions: unknown,
   rawConditionMode: unknown,
   weatherHistory: WeatherSample[] | null,
+  deviceHistories: Record<string, DeviceStateSample[]> | null,
   windowEndMs: number
 ): ConditionEvaluationSummary {
   const conditions = Array.isArray(rawConditions) ? rawConditions : []
@@ -393,7 +506,7 @@ export function evaluateConditionsWithDetails(
   }
 
   const items = evaluableConditions.map((condition) =>
-    buildEvaluationItem(condition, weatherHistory, windowEndMs)
+    buildEvaluationItem(condition, weatherHistory, deviceHistories, windowEndMs)
   )
 
   const mode = resolveConditionMode(rawConditionMode)

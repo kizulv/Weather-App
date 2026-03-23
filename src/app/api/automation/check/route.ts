@@ -7,8 +7,9 @@ import {
   evaluateConditionsWithDetails,
   fetchMinuteWeatherHistoryByWindow,
   getMaxRequiredHoursFromConditions,
+  fetchHAHistory,
 } from "@/features/automation/server/condition-evaluator";
-import { Automation } from "@/features/automation/types/automation";
+import { Automation, Condition, LastStateDeviceConditionValue } from "@/features/automation/types/automation";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,45 @@ export async function GET() {
       }
     }
 
+    // 5. Gom nhóm fetch data lịch sử thiết bị (HA)
+    const deviceHistories: Record<string, import("@/features/automation/server/condition-evaluator").DeviceStateSample[]> = {};
+    const entitiesToFetch = new Set<string>();
+    
+    // Tìm tất cả các entity cần lấy history
+    for (const auto of automations) {
+      const lastStateConds = (auto.conditions as Condition[] || []).filter(c => c.type === "last_state_device");
+      for (const c of lastStateConds) {
+        const val = c.value as LastStateDeviceConditionValue;
+        if (val.entity_id) entitiesToFetch.add(val.entity_id);
+      }
+    }
+
+    if (entitiesToFetch.size > 0 && config?.url && config?.token) {
+      await Promise.all(Array.from(entitiesToFetch).map(async (entityId) => {
+        try {
+          // Tìm window lớn nhất cho entity này
+          let maxMinutes = 0;
+          for (const auto of automations) {
+            const conds = (auto.conditions as Condition[] || []).filter(c => c.type === "last_state_device" && (c.value as LastStateDeviceConditionValue).entity_id === entityId);
+            for (const c of conds) {
+              maxMinutes = Math.max(maxMinutes, (c.value as LastStateDeviceConditionValue).minutes);
+            }
+          }
+          
+          const history = await fetchHAHistory(
+            config.url,
+            config.token,
+            entityId,
+            conditionWindowEnd.getTime() - (maxMinutes + 5) * 60 * 1000,
+            conditionWindowEnd.getTime()
+          );
+          deviceHistories[entityId] = history;
+        } catch (err) {
+          console.error(`Lỗi fetch history cho ${entityId}:`, err);
+        }
+      }));
+    }
+
     const executionResults = [];
 
     for (const auto of automations) {
@@ -95,6 +135,7 @@ export async function GET() {
           auto.conditions,
           auto.condition_mode,
           weatherHistory,
+          deviceHistories,
           conditionWindowEnd.getTime()
         );
 
