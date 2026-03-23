@@ -2,8 +2,8 @@
 
 import { useRef, useCallback } from "react";
 import {
-  Bar,
-  BarChart,
+  Area,
+  AreaChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -76,11 +76,11 @@ export function WeatherChart({ data }: WeatherChartProps) {
       <div className="overflow-x-auto overflow-y-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div ref={ref} className="min-w-160 h-64">
           {width > 0 && height > 0 && (
-            <BarChart width={width} height={height} data={[...data].reverse()} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart width={width} height={height} data={[...data].reverse()} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#f97316" stopOpacity={0.3} />
+                  <stop offset="5%" stopColor="#f97316" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff05" />
@@ -88,18 +88,18 @@ export function WeatherChart({ data }: WeatherChartProps) {
                 dataKey="time" 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: '#ffffff40', fontSize: 12 }} 
+                tick={{ fill: '#ffffff40', fontSize: 10 }} 
                 dy={10}
                 interval={1}
               />
               <YAxis 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: '#ffffff40', fontSize: 12 }} 
+                tick={{ fill: '#ffffff40', fontSize: 10 }} 
                 tickFormatter={(value) => formatWeatherValue(value).toString()}
               />
               <Tooltip 
-                cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                cursor={{ stroke: '#ffffff20', strokeWidth: 1 }}
                 formatter={(value: number | string | readonly (number | string)[] | undefined) => {
                   if (value === undefined) return ["", ""];
                   if (Array.isArray(value)) {
@@ -108,24 +108,35 @@ export function WeatherChart({ data }: WeatherChartProps) {
                   return [formatWeatherValue(value as number | string), "Nhiệt độ (°C)"];
                 }}
                 contentStyle={{ 
-                  backgroundColor: '#1a1a1a', 
+                  backgroundColor: '#0f172a', 
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '12px',
-                  fontSize: '12px',
-                  color: '#fff'
+                  fontSize: '10px',
+                  color: '#fff',
+                  backdropFilter: 'blur(8px)'
                 }}
                 itemStyle={{ color: '#fff' }}
               />
-              <Bar
+              <Area
+                type="monotone"
                 dataKey="temperature"
+                stroke="#f97316"
+                strokeWidth={3}
+                fillOpacity={1}
                 fill="url(#colorTemp)"
-                radius={[4, 4, 0, 0]}
                 name="Nhiệt độ"
-                barSize={16}
+                animationDuration={1500}
               >
-                <LabelList dataKey="temperature" position="top" fill="#ffffff60" fontSize={10} offset={8} formatter={(val: unknown) => val != null ? Math.round(Number(val)) : ""} />
-              </Bar>
-            </BarChart>
+                <LabelList 
+                  dataKey="temperature" 
+                  position="top" 
+                  fill="#ffffff60" 
+                  fontSize={10} 
+                  offset={12} 
+                  formatter={(val: unknown) => val != null ? `${Math.round(Number(val))}°` : ""} 
+                />
+              </Area>
+            </AreaChart>
           )}
         </div>
       </div>

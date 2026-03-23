@@ -1,15 +1,22 @@
 "use client"
 
-import { PlayCircle, Plus } from "lucide-react"
+import { Bell, PlayCircle, Plus, Zap } from "lucide-react"
 
 import { Action, Device } from "@/features/automation/types/automation"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ActionDevice } from "./ActionDevice"
+import { ActionNotification } from "./Notification"
 
 interface AutomationActionsSectionProps {
   title: string
   actions: Action[]
   devices: Device[]
-  onAddAction: () => void
+  onAddAction: (type: "device" | "notification") => void
   onRemoveAction: (index: number) => void
   onRunAction: (action: Action) => void
   onUpdateAction: (index: number, patch: Partial<Action>) => void
@@ -33,14 +40,37 @@ export function AutomationActionsSection({
             {title}
           </span>
         </div>
-        <button
-          onClick={onAddAction}
-          title="Thêm hành động"
-          className="w-30 flex items-center justify-center gap-1.5 pr-2 py-2 rounded-sm bg-slate-800/40 text-slate-400 border border-slate-700/50 hover:bg-slate-700/50 hover:text-slate-200 transition-all text-[10px] uppercase tracking-wider font-bold"
-        >
-          <Plus className="h-3 w-3" />
-          Thêm
-        </button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              title="Thêm hành động"
+              className="w-30 flex flex-1 items-center justify-center gap-1.5 rounded-sm border border-slate-700/50 bg-slate-800/40 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 transition-all hover:bg-slate-700/50 hover:text-slate-200 sm:flex-none sm:pl-2.5 sm:pr-4 cursor-pointer"
+            >
+              <Plus className="h-3 w-3 group-hover:rotate-90 transition-transform duration-300" />
+              Thêm
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            align="end" 
+            className="w-60 bg-slate-900/10 border-slate-700/50 text-white rounded-sm p-2 shadow-2xl backdrop-blur-xl"
+          >
+            <DropdownMenuItem 
+              onClick={() => onAddAction("device")}
+              className="flex items-center gap-2 px-2.5 py-3 text-xs font-medium rounded-sm focus:bg-slate-800 cursor-pointer transition-colors"
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Điều khiển thiết bị
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => onAddAction("notification")}
+              className="flex items-center gap-2 px-2.5 py-3 text-xs font-medium rounded-sm focus:bg-slate-800 cursor-pointer transition-colors"
+            >
+              <Bell className="h-3.5 w-3.5" />
+              Gửi thông báo
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="space-y-2">
@@ -53,16 +83,33 @@ export function AutomationActionsSection({
             <p className="text-[11px] text-white/15 mt-1">Nhấn &quot;Thêm&quot; để bắt đầu</p>
           </div>
         ) : (
-          actions.map((action, idx) => (
-            <ActionDevice
-              key={idx}
-              action={action}
-              devices={devices}
-              onRemove={() => onRemoveAction(idx)}
-              onRun={() => onRunAction(action)}
-              onUpdate={(patch) => onUpdateAction(idx, patch)}
-            />
-          ))
+          actions.map((action, idx) => {
+            const isNotification = action.service.startsWith("notify.") || action.title !== undefined || action.message !== undefined
+            
+            if (isNotification) {
+              return (
+                <ActionNotification
+                  key={idx}
+                  action={action}
+                  devices={devices}
+                  onRemove={() => onRemoveAction(idx)}
+                  onRun={() => onRunAction(action)}
+                  onUpdate={(patch: Partial<Action>) => onUpdateAction(idx, patch)}
+                />
+              )
+            }
+
+            return (
+              <ActionDevice
+                key={idx}
+                action={action}
+                devices={devices}
+                onRemove={() => onRemoveAction(idx)}
+                onRun={() => onRunAction(action)}
+                onUpdate={(patch: Partial<Action>) => onUpdateAction(idx, patch)}
+              />
+            )
+          })
         )}
       </div>
     </div>

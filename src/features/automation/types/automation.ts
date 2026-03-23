@@ -6,6 +6,8 @@ export interface Trigger {
 export interface Action {
   service: string;
   entity_id: string;
+  message?: string; // Thêm cho hành động thông báo
+  title?: string;   // Tiêu đề thông báo
 }
 
 export type ConditionOperator = ">=" | "=" | "<="

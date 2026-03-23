@@ -39,29 +39,12 @@ export function AutomationCard({
   onToggle,
   onClick,
   onDelete,
-  onRun,
 }: AutomationCardProps) {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
+  const [] = useState(false);
 
-  const handleRun = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isRunning) return;
-    setIsRunning(true);
-    try {
-      await onRun(id);
-    } finally {
-      setIsRunning(false);
-    }
-  };
 
   const handleToggle = async (checked: boolean) => {
-    setIsUpdating(true);
-    try {
-      await onToggle(id, checked);
-    } finally {
-      setIsUpdating(false);
-    }
+    await onToggle(id, checked);
   };
 
   const getTriggerLabel = () => {
@@ -145,7 +128,6 @@ export function AutomationCard({
           <Switch 
             checked={enabled} 
             onCheckedChange={handleToggle}
-            disabled={isUpdating}
             className="data-[state=checked]:bg-green-600 scale-110 border-white/10"
           />
         </div>
@@ -154,10 +136,14 @@ export function AutomationCard({
       {/* Info & Metadata */}
       <div className="flex flex-col gap-2 relative z-10">
         <div className="mt-2 flex items-center gap-1 px-3 py-2 rounded-xl bg-white/5 border border-white/5">
-          <Clock className="h-3.5 w-3.5 text-white/80" />
-          <span className="text-xs font-semibold text-white/70">{getTriggerLabel()}</span>
-          <ChevronRight className="h-3 w-3 text-white/80 ml-auto" />
-          <span className="text-xs font-bold text-white/70">{getActionLabel()}</span>
+          <div className="flex flex-row items-center gap-1 shrink-0">
+            <Clock className="h-3.5 w-3.5 text-white/80" />
+            <span className="text-xs font-semibold text-white/70">{getTriggerLabel()}</span>
+          </div>
+          <div className="flex-1 flex flex-row items-center overflow-hidden gap-1">
+            <ChevronRight className="h-3 w-3 text-white/80" />
+            <span className="text-xs font-bold text-white/70 truncate">{getActionLabel()}</span>
+          </div>
         </div>
       </div>
 
@@ -176,25 +162,12 @@ export function AutomationCard({
         {/* Action Buttons (Visible on hover) */}
         <div className="flex items-center gap-2 duration-300">
           <button 
-            title="Chạy ngay"
-            disabled={isRunning}
-            onClick={handleRun}
-            className={cn(
-              "px-3 py-1.5 rounded-xl text-[10px] font-semibold uppercase transition-all",
-              isRunning 
-                ? "bg-white/5 text-white" 
-                : "bg-blue-500/10 text-white hover:bg-blue-500/20 hover:text-white"
-            )}
-          >
-            {isRunning ? "Running..." : "Chạy thử"}
-          </button>
-          <button 
             title="Xóa"
             onClick={(e) => {
               e.stopPropagation();
               onDelete(id);
             }}
-            className="p-1.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all"
+            className="p-1.5 rounded-xl bg-red-500/10 text-red-400 border border-red-500/10 hover:bg-red-500 hover:text-white transition-all cursor-pointer"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>

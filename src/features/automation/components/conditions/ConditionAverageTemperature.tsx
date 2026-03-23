@@ -94,7 +94,7 @@ export function ConditionAverageTemperature({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-row w-full">
+        <div className="flex items-center gap-2.5 flex-row w-full sm:w-auto shrink-0">
           <Select
             value={value.operator}
             onValueChange={(operator) =>
@@ -131,15 +131,16 @@ export function ConditionAverageTemperature({
               {config.thresholdSuffix}
             </span>
           </div>
-
-          <button
-            onClick={onRemove}
-            title="Xóa điều kiện"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-sm text-rose-400 transition-all bg-rose-500/10"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
         </div>
+
+        <button
+          onClick={onRemove}
+          title="Xóa điều kiện"
+          className="flex shrink-0 items-center justify-center h-9 w-full sm:w-9 rounded-sm text-rose-400 transition-all bg-rose-500/10 cursor-pointer"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          <span className="text-xs pl-1 sm:hidden">Xóa điều kiện</span>
+        </button>
       </div>
     </div>
   )

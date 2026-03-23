@@ -99,18 +99,33 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
   };
 
   const handleToggleAutomation = async (id: string, enabled: boolean) => {
+    // Tìm automation hiện tại từ danh sách để lấy đầy đủ dữ liệu
+    const currentAutomation = automations.find(a => a._id === id);
+    if (!currentAutomation) return;
+
+    // Optimistic UI update: Cập nhật ngay lập tức trong UI
+    const previousAutomations = [...automations];
+    setAutomations(prev => prev.map(a => a._id === id ? { ...a, enabled } : a));
+
     try {
       const res = await fetch(`/api/automation/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled }),
+        // Gửi toàn bộ dữ liệu automation nhưng với giá trị enabled mới
+        body: JSON.stringify({ ...currentAutomation, enabled }),
       });
       const json = await res.json();
-      if (json.success) {
-        setAutomations(prev => prev.map(a => a._id === id ? { ...a, enabled } : a));
+      
+      if (!json.success) {
+        // Hoàn tác nếu server báo lỗi
+        setAutomations(previousAutomations);
+        toast.error(json.message || "Không thể cập nhật trạng thái");
       }
-    } catch {
-      toast.error("Lỗi khi thay đổi trạng thái");
+    } catch (err) {
+      // Hoàn tác nếu lỗi kết nối
+      setAutomations(previousAutomations);
+      console.error("Lỗi toggle automation:", err);
+      toast.error("Lỗi kết nối khi thay đổi trạng thái");
     }
   };
 

@@ -87,6 +87,17 @@ export function AutomationDialog({
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    if (open) {
+      setName(automation?.name || "")
+      setTrigger(automation?.trigger || { type: "time", value: "08:00" })
+      setConditions(automation?.conditions?.map((condition) => normalizeCondition(condition)) || [])
+      setConditionMode(automation?.condition_mode === "any" ? "any" : "all")
+      setActionsWhenMatched(getInitialMatchedActions(automation))
+      setActionsWhenUnmatched(getInitialUnmatchedActions(automation))
+    }
+  }, [open, automation])
+
+  useEffect(() => {
     const fetchDevices = async () => {
       try {
         const res = await fetch("/api/home-assistant/devices")
@@ -197,18 +208,16 @@ export function AutomationDialog({
     await runConditionEvaluation()
   }
 
-  const addAction = (branch: ActionBranch) => {
+  const addAction = (branch: ActionBranch, type: "device" | "notification") => {
+    const newAction: Action = type === "notification" 
+      ? { service: "notify.", entity_id: "", title: "", message: "" }
+      : { service: "switch.turn_on", entity_id: "" }
+
     if (branch === "matched") {
-      setActionsWhenMatched((prev) => [
-        ...prev,
-        { service: "switch.turn_on", entity_id: "" },
-      ])
+      setActionsWhenMatched((prev) => [...prev, newAction])
       return
     }
-    setActionsWhenUnmatched((prev) => [
-      ...prev,
-      { service: "switch.turn_on", entity_id: "" },
-    ])
+    setActionsWhenUnmatched((prev) => [...prev, newAction])
   }
 
   const removeAction = (branch: ActionBranch, index: number) => {
@@ -236,7 +245,9 @@ export function AutomationDialog({
   }
 
   const runAction = async (action: Action) => {
-    if (!action.entity_id) {
+    const isNotification = action.service.startsWith("notify.")
+
+    if (!isNotification && !action.entity_id) {
       toast.error("Vui lòng chọn thiết bị trước khi chạy thử")
       return
     }
@@ -248,11 +259,13 @@ export function AutomationDialog({
         body: JSON.stringify({
           service: action.service,
           entity_id: action.entity_id,
+          title: action.title,
+          message: action.message,
         }),
       })
       const json = await res.json()
       if (json.success) {
-        toast.success(`Đã gửi lệnh tới ${action.entity_id}`)
+        toast.success(isNotification ? "Đã gửi thông báo thử nghiệm" : `Đã gửi lệnh tới ${action.entity_id}`)
       } else {
         toast.error(json.message || "Lỗi khi thực thi lệnh")
       }
@@ -299,13 +312,14 @@ export function AutomationDialog({
       return
     }
     const allActions = [...actionsWhenMatched, ...actionsWhenUnmatched]
-    if (allActions.some((action) => !action.entity_id)) {
-      toast.error("Vui lòng chọn thiết bị cho tất cả hành động")
+    if (allActions.some((action) => !action.service.startsWith("notify.") && !action.entity_id)) {
+      toast.error("Vui lòng chọn thiết bị cho các hành động điều khiển")
       return
     }
-    const hasInvalidCondition = conditions.some((condition) => {
-      const normalized = normalizeCondition(condition)
-      const value = normalized.value as NumericWindowConditionValue
+
+    const normalizedConditions = conditions.map(normalizeCondition)
+    const hasInvalidCondition = normalizedConditions.some((condition) => {
+      const value = condition.value as NumericWindowConditionValue
       return !Number.isFinite(value.hours) || !Number.isFinite(value.threshold)
     })
     if (hasInvalidCondition) {
@@ -328,7 +342,11 @@ export function AutomationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-165 bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 text-white rounded-2xl p-0 overflow-hidden shadow-2xl focus:outline-none text-xs">
+      <DialogContent 
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        className="sm:max-w-165 bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 text-white rounded-2xl p-0 overflow-hidden shadow-2xl focus:outline-none text-xs"
+      >
         <DialogHeader className="relative px-6 py-4 border-b border-slate-800/30">
           <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -397,7 +415,7 @@ export function AutomationDialog({
             title="Hành động khi thỏa mãn điều kiện"
             actions={actionsWhenMatched}
             devices={devices}
-            onAddAction={() => addAction("matched")}
+            onAddAction={(type) => addAction("matched", type)}
             onRemoveAction={(index) => removeAction("matched", index)}
             onRunAction={runAction}
             onUpdateAction={(index, patch) => updateAction("matched", index, patch)}
@@ -407,7 +425,7 @@ export function AutomationDialog({
             title="Hành động khi không thỏa mãn điều kiện"
             actions={actionsWhenUnmatched}
             devices={devices}
-            onAddAction={() => addAction("unmatched")}
+            onAddAction={(type) => addAction("unmatched", type)}
             onRemoveAction={(index) => removeAction("unmatched", index)}
             onRunAction={runAction}
             onUpdateAction={(index, patch) => updateAction("unmatched", index, patch)}

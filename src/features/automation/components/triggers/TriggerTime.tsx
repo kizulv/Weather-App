@@ -13,7 +13,7 @@ export function TriggerTime({ value, onChange }: TriggerTimeProps) {
       type="time"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="bg-slate-800/40 border-slate-700/50 rounded-sm h-9 font-semibold text-xs w-full"
+      className="bg-slate-800/40 border-slate-700/50 rounded-sm h-9! font-semibold text-xs! w-full text-white px-3 py-0 appearance-none [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
     />
   )
 }

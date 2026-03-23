@@ -18,10 +18,10 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { service, entity_id } = body;
+    const { service, entity_id, title, message } = body;
 
-    if (!service || !entity_id) {
-      return NextResponse.json({ success: false, message: "Thiếu service hoặc entity_id" }, { status: 400 });
+    if (!service) {
+      return NextResponse.json({ success: false, message: "Thiếu service (vd: notify.mobile_app_...)" }, { status: 400 });
     }
 
     // 2. Lấy cấu hình HA từ server ngoại
@@ -40,9 +40,19 @@ export async function POST(req: Request) {
     const haUrl = config.url.replace(/\/$/, "");
 
     // 4. Gọi HA API
-    const [domain, serviceName] = service.split(".");
+    const [domain, ...serviceParts] = service.split(".");
+    let serviceName = serviceParts.join(".");
+    
+    // Nếu chỉ gửi "notify", tự động chuyển thành "notify.notify"
+    if (domain === "notify" && !serviceName) {
+      serviceName = "notify";
+    }
+
     if (!domain || !serviceName) {
-      return NextResponse.json({ success: false, message: "Định dạng service không hợp lệ (vd: switch.turn_on)" }, { status: 400 });
+      return NextResponse.json({ 
+        success: false, 
+        message: "Định dạng service không hợp lệ. Phải là domain.service (vd: notify.notify hoặc switch.turn_on)" 
+      }, { status: 400 });
     }
 
     const haProxyResponse = await fetch(`${haUrl}/api/services/${domain}/${serviceName}`, {
@@ -51,7 +61,13 @@ export async function POST(req: Request) {
         Authorization: `Bearer ${haToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ entity_id }),
+      body: JSON.stringify({ 
+        // Domain notify KHÔNG dùng entity_id trong body, 
+        // các domain khác (switch, light, v.v.) thì CẦN.
+        ...(domain !== "notify" && entity_id ? { entity_id } : {}),
+        ...(title ? { title } : {}),
+        ...(message ? { message } : {}),
+      }),
     });
 
     if (!haProxyResponse.ok) {
