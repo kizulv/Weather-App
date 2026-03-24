@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { DailyWeather } from "./weather-data";
 
 // Cho phép server gọi API qua IP nội bộ thay vì qua domain công khai (tránh hairpin routing)
-const WEATHER_API_BASE = process.env.WEATHER_API_BASE_URL || "https://api.pcthanh.com";
+const WEATHER_API_BASE = process.env.WEATHER_API_BASE_URL;
 
 // ========== IN-MEMORY CACHE ==========
 const CACHE_TTL_MS = 60 * 1000; // 60 giây — khớp với interval auto-refresh ở client
@@ -86,15 +86,15 @@ export async function fetchWeatherData(token: string): Promise<WeatherData | nul
 
   // Gọi song song 3 requests — sử dụng base URL từ env để tránh hairpin routing
   const [res24h, res7d, resRt] = await Promise.all([
-    fetch(`${WEATHER_API_BASE}/v1/weather/history?deviceId=esp8266&range=-24h&aggregate=1h`, { 
+    fetch(`${WEATHER_API_BASE}/weather/history?deviceId=esp8266&range=-24h&aggregate=1h`, { 
       headers: commonHeaders,
       cache: "no-store",
     }),
-    fetch(`${WEATHER_API_BASE}/v1/weather/history?deviceId=esp8266&range=-7d&aggregate=1d`, { 
+    fetch(`${WEATHER_API_BASE}/weather/history?deviceId=esp8266&range=-7d&aggregate=1d`, { 
       headers: commonHeaders, 
       cache: "no-store",
     }),
-    fetch(`${WEATHER_API_BASE}/v1/weather/history?deviceId=esp8266&range=-1h&aggregate=none`, { 
+    fetch(`${WEATHER_API_BASE}/weather/history?deviceId=esp8266&range=-1h&aggregate=none`, { 
       headers: commonHeaders, 
       cache: "no-store",
     })

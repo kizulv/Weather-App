@@ -10,7 +10,7 @@ import {
 export const MAX_CONDITION_HOURS = 24
 const SUNLIGHT_THRESHOLD = 0
 const WEATHER_API_BASE =
-  process.env.WEATHER_API_BASE_URL || "https://api.pcthanh.com"
+  process.env.WEATHER_API_BASE_URL
 const HOUR_MS = 60 * 60 * 1000
 const MINUTE_MS = 60 * 1000
 const DAY_MS = 24 * HOUR_MS
@@ -354,7 +354,7 @@ export async function fetchMinuteWeatherHistory(
   lookbackHours: number
 ): Promise<WeatherSample[]> {
   const res = await fetch(
-    `${WEATHER_API_BASE}/v1/weather/history?deviceId=esp8266&range=-${lookbackHours}h&aggregate=none`,
+    `${WEATHER_API_BASE}/weather/history?deviceId=esp8266&range=-${lookbackHours}h&aggregate=none`,
     {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
@@ -439,7 +439,7 @@ export async function fetchMinuteWeatherHistoryByWindow(
         end: toVnHourMinuteString(segment.endMs),
       })
 
-      const res = await fetch(`${WEATHER_API_BASE}/v1/weather/history?${params}`, {
+      const res = await fetch(`${WEATHER_API_BASE}/weather/history?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       })

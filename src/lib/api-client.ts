@@ -2,8 +2,7 @@
  * Shared API Client for api.pcthanh.com
  */
 
-const apiBase = process.env.NEXT_PUBLIC_API_URL || process.env.WEATHER_API_BASE_URL || "https://api.pcthanh.com";
-const API_BASE_URL = apiBase.endsWith("/v1") ? apiBase : `${apiBase}/v1`;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.WEATHER_API_BASE_URL;
 
 export async function apiClient<T = unknown>(
   endpoint: string,

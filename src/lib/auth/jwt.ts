@@ -11,8 +11,7 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
     const decoded = jwtDecode(token) as Record<string, unknown>;
     
     // 2. Gọi API ngoại để xác thực thực sự
-    const apiBase = process.env.WEATHER_API_BASE_URL || "https://api.pcthanh.com";
-    const baseUrl = apiBase.endsWith("/v1") ? apiBase : `${apiBase}/v1`;
+    const baseUrl = process.env.WEATHER_API_BASE_URL;
     
     const response = await fetch(`${baseUrl}/auth/me`, {
       headers: {
