@@ -35,7 +35,7 @@ import {
   sidebarMainNav,
   sidebarSecondaryNav,
   type SidebarNavItem,
-} from "@/shared/navigation/sidebar-nav"
+} from "@/components/layout/sidebar-nav"
 
 export function AppSidebar() {
   const router = useRouter()

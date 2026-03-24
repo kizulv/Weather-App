@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { loginSchema } from "@/modules/auth/auth.schema";
-import { authService } from "@/modules/auth/auth.service";
+import { loginSchema } from "@/features/auth/auth.schema";
+import { authService } from "@/features/auth/auth.service";
 import { ZodError } from "zod";
 import { cookies } from "next/headers";
 

@@ -4,7 +4,7 @@ import {
   Settings,
   type LucideIcon,
 } from "lucide-react"
-import { APP_ROUTES } from "@/shared/constants/routes"
+import { APP_ROUTES } from "@/features/constants/routes"
 
 export type SidebarMatchMode = "exact" | "prefix"
 

@@ -9,9 +9,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { KeyRound, Lock, User } from "lucide-react";
-import { APP_ROUTES } from "@/shared/constants/routes";
+import { APP_ROUTES } from "@/features/constants/routes";
 
 // Schema đăng nhập
 const loginSchema = z.object({
@@ -23,6 +22,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
 
   const {
@@ -35,6 +35,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
+    setErrorMsg(null);
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
@@ -50,17 +51,12 @@ export default function LoginPage() {
         throw new Error(result.message || "Đăng nhập thất bại");
       }
 
-      toast.success("Đăng nhập thành công!", {
-        description: "Đang chuyển hướng...",
-      });
-      
       router.push(APP_ROUTES.defaults.authenticated);
       router.refresh();
       
     } catch (error: unknown) {
-      toast.error("Lỗi đăng nhập", {
-        description: error instanceof Error ? error.message : "Đã có lỗi xảy ra",
-      });
+      const message = error instanceof Error ? error.message : "Đã có lỗi xảy ra";
+      setErrorMsg(message);
     } finally {
       setIsLoading(false);
     }
@@ -82,6 +78,11 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent className="pb-6">
+          {errorMsg && (
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs text-center animate-in fade-in slide-in-from-top-1 duration-200">
+              {errorMsg}
+            </div>
+          )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1.5">
               <Label className="text-sm text-white/60">Email</Label>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { APP_ROUTES } from "@/shared/constants/routes"
+import { APP_ROUTES } from "@/features/constants/routes"
 
 // Các routes không cần check token
 const publicRoutes = [APP_ROUTES.login, APP_ROUTES.api.authLogin]

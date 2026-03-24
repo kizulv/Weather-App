@@ -2,7 +2,8 @@
  * Shared API Client for api.pcthanh.com
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.pcthanh.com/v1";
+const apiBase = process.env.NEXT_PUBLIC_API_URL || process.env.WEATHER_API_BASE_URL || "https://api.pcthanh.com";
+const API_BASE_URL = apiBase.endsWith("/v1") ? apiBase : `${apiBase}/v1`;
 
 export async function apiClient<T = unknown>(
   endpoint: string,
@@ -27,7 +28,9 @@ export async function apiClient<T = unknown>(
  
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `API Error: ${response.statusText}`);
+    const error = new Error(errorData.message || `API Error: ${response.statusText}`) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
   }
  
   return response.json() as Promise<T>;

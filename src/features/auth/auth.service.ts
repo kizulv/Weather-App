@@ -22,6 +22,13 @@ export class AuthService {
         throw new Error(data.message || "INVALID_CREDENTIALS");
       }
 
+      // Lấy token từ response
+      const token = data.token || data.data?.token;
+
+      if (!token) {
+        throw new Error("Không nhận được token từ máy chủ");
+      }
+
       if (!data.user) {
         console.error("Login successful but 'user' object is missing in response!");
         const dataPayload = data.data as Record<string, unknown> | undefined;
@@ -33,7 +40,7 @@ export class AuthService {
             name: String(userData.name || "User"),
             role: String(userData.role || "VIEWER"),
           },
-          token: data.token || (dataPayload?.token as string | undefined),
+          token,
         };
       }
 
@@ -44,9 +51,12 @@ export class AuthService {
           name: data.user.name,
           role: data.user.role || "VIEWER",
         },
-        token: data.token,
+        token,
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "status" in error && error.status === 401) {
+        throw new Error("INVALID_CREDENTIALS");
+      }
       console.error("AuthService Login Error:", error);
       throw error;
     }

@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/layout/app-sidebar"
 import { SidebarProvider } from "@/components/ui/sidebar"
 
 export default function ProtectedLayout({
