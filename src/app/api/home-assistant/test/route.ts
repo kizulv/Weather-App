@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth/jwt";
 import { cookies } from "next/headers";
 import { apiClient } from "@/lib/api-client";
+import { Device } from "@/features/automation/types/automation";
 
 export async function POST(req: Request) {
   // 1. Xác thực người dùng
@@ -35,19 +36,28 @@ export async function POST(req: Request) {
     }
 
     // 3. Gọi API ngoại để đồng bộ thiết bị ngay lập tức
-    const syncRes = await apiClient<{ 
-      success: boolean; 
-      message?: string; 
-      data?: Record<string, unknown> 
-    }>("/home-assistant/sync", {
+    const syncRes = await apiClient<{ success: boolean }>("/home-assistant/sync", {
       method: "POST"
     }, token);
+
+    if (!syncRes.success) {
+      return NextResponse.json(syncRes, { status: 400 });
+    }
+
+    // 4. Lấy danh sách thiết bị thực tế sau khi đồng bộ để đếm
+    const devicesRes = await apiClient<{ success: boolean; data?: Device[] }>("/home-assistant/devices", {
+      method: "GET"
+    }, token);
+
+    const deviceCount = devicesRes.data?.length || 0;
 
     return NextResponse.json({ 
       success: true, 
       message: "Kết nối và đồng bộ thành công qua API server!",
+      deviceCount,
       save_info: saveRes,
-      sync_info: syncRes
+      sync_info: syncRes,
+      devices: devicesRes.data || []
     });
 
   } catch (error) {

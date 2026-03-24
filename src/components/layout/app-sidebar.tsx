@@ -30,7 +30,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { useRouter, usePathname } from "next/navigation"
-import { SettingsDialog } from "@/features/home-assistant/components/SettingsDialog"
+import { SettingsDialog } from "@/features/setting/components/SettingsDialog"
 import {
   sidebarMainNav,
   sidebarSecondaryNav,
