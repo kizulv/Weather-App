@@ -56,9 +56,7 @@ function resolveWindowEndByTrigger(now: Date, trigger: unknown) {
     0
   )
 
-  const triggerMs = triggerMsToday > vnNowMs
-    ? triggerMsToday - 24 * 60 * 60 * 1000
-    : triggerMsToday
+  const triggerMs = triggerMsToday
 
   return triggerMs - VN_OFFSET_MS
 }

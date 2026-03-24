@@ -12,7 +12,7 @@ export interface Action {
 
 export type ConditionOperator = ">=" | "=" | "<="
 
-export type ConditionType = "average_temperature" | "sunshine_hours" | "last_state_device"
+export type ConditionType = "average_temperature" | "sunshine_hours" | "rain_minutes" | "last_state_device"
 
 export interface NumericWindowConditionValue {
   hours: number

@@ -14,6 +14,7 @@ import { Condition, ConditionMode, ConditionOperator, ConditionType, Device, Las
 
 import { ConditionAverageTemperature } from "./ConditionAverageTemperature"
 import { ConditionSunshineHours } from "./ConditionSunshineHours"
+import { ConditionRain } from "./ConditionRain"
 import { ConditionLastStateDevice } from "./LastStateDeviceCondition"
 
 // --- Constants ---
@@ -47,6 +48,14 @@ export const CONDITION_CONFIG: Record<
     thresholdLabel: "Số giờ nắng",
     thresholdStep: "1",
     thresholdSuffix: "giờ",
+  },
+  rain_minutes: {
+    label: "Số phút mưa trong",
+    defaultHours: 2,
+    defaultThreshold: 20,
+    thresholdLabel: "Số phút",
+    thresholdStep: "1",
+    thresholdSuffix: "phút",
   },
   last_state_device: {
     label: "Trạng thái thiết bị",
@@ -88,6 +97,7 @@ export function toFiniteNumber(value: unknown, fallback: number) {
 
 export function resolveConditionType(type: unknown): ConditionType {
   if (type === "sunshine_hours") return "sunshine_hours"
+  if (type === "rain_minutes") return "rain_minutes"
   if (type === "last_state_device") return "last_state_device"
   return "average_temperature"
 }
@@ -184,6 +194,7 @@ function ConditionTestResultDisplay({ result, devices }: { result: ConditionTest
     if (item.type === "last_state_device") return item.passed ? "Đúng" : "Sai"
     if (typeof item.actual === "number") {
       if (item.type === "average_temperature") return `${item.actual.toFixed(2)}°C`
+      if (item.type === "rain_minutes") return `${item.actual.toFixed(0)} phút`
       return `${item.actual.toFixed(2)} giờ`
     }
     return String(item.actual)
@@ -325,6 +336,16 @@ export function AutomationConditionsSection({
             if (type === "sunshine_hours") {
               return (
                 <ConditionSunshineHours
+                  key={idx}
+                  condition={condition}
+                  onRemove={() => onRemoveCondition(idx)}
+                  onUpdate={(next: Condition) => onUpdateCondition(idx, next)}
+                />
+              )
+            }
+            if (type === "rain_minutes") {
+              return (
+                <ConditionRain
                   key={idx}
                   condition={condition}
                   onRemove={() => onRemoveCondition(idx)}

@@ -20,6 +20,7 @@ export type WeatherSample = {
   timestampMs: number
   temperature: number
   lightIntensity: number
+  isRaining: number
 }
 
 export type DeviceStateSample = {
@@ -31,6 +32,7 @@ type ExternalMinuteWeatherData = {
   timestamp: number
   temperature: number
   light_intensity: number
+  is_raining: number
 }
 
 type ExternalMinuteWeatherResponse = {
@@ -73,7 +75,7 @@ export interface ConditionEvaluationSummary {
 }
 
 function resolveConditionType(type: unknown): ConditionType | null {
-  if (type === "average_temperature" || type === "sunshine_hours" || type === "last_state_device") return type
+  if (type === "average_temperature" || type === "sunshine_hours" || type === "rain_minutes" || type === "last_state_device") return type
   return null
 }
 
@@ -274,6 +276,26 @@ function buildEvaluationItem(
     }
   }
 
+  if (condition.type === "rain_minutes") {
+    const actual = weatherWindow.reduce((sum, item) => sum + (item.isRaining === 1 ? 1 : 0), 0)
+    return {
+      index: condition.index,
+      type: condition.type,
+      hours: val.hours,
+      operator: val.operator,
+      threshold: val.threshold,
+      actual,
+      passed: compareWithOperator(
+        actual,
+        val.operator,
+        val.threshold
+      ),
+      sampleCount: weatherWindow.length,
+      windowStartMs,
+      windowEndMs,
+    }
+  }
+
   // Sunshine hours
   const actual =
     weatherWindow.filter((item) => item.lightIntensity > SUNLIGHT_THRESHOLD).length /
@@ -353,6 +375,7 @@ export async function fetchMinuteWeatherHistory(
       timestampMs: item.timestamp * 1000,
       temperature: item.temperature,
       lightIntensity: item.light_intensity,
+      isRaining: item.is_raining,
     }))
     .sort((a, b) => a.timestampMs - b.timestampMs)
 }
@@ -434,6 +457,7 @@ export async function fetchMinuteWeatherHistoryByWindow(
         timestampMs: item.timestamp * 1000,
         temperature: item.temperature,
         lightIntensity: item.light_intensity,
+        isRaining: item.is_raining,
       }))
     })
   )
