@@ -129,13 +129,13 @@ export function ActionNotification({
               value={action.title || ""}
               onChange={(e) => onUpdate({ title: e.target.value })}
               placeholder="Tiêu đề thông báo..."
-              className="bg-slate-800/40 border-slate-700/50 rounded-sm h-8 text-[11px] focus-visible:ring-blue-500/30 placeholder:text-white/20"
+              className="bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-[11px] focus-visible:ring-blue-500/30 placeholder:text-white/20"
             />
             <Input
               value={action.message || ""}
               onChange={(e) => onUpdate({ message: e.target.value })}
               placeholder="Nội dung tin nhắn..."
-              className="bg-slate-800/40 border-slate-700/50 rounded-sm h-8 text-[11px] focus-visible:ring-blue-500/30 placeholder:text-white/20"
+              className="bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-[11px] focus-visible:ring-blue-500/30 placeholder:text-white/20"
             />
           </div>
         </div>

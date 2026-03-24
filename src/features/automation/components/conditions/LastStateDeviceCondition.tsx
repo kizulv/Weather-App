@@ -66,66 +66,66 @@ export function ConditionLastStateDevice({
       <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-blue-500/40 opacity-0 group-hover/row:opacity-100 transition-opacity" />
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5 flex-row w-full flex-1">
-
-          {/* Thiết bị */}
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                className={cn(
-                  "flex-1 justify-between bg-slate-800/40 border-slate-700/50 rounded-sm h-9 font-medium text-xs hover:bg-slate-700/50 text-left px-3 hover:text-white truncate min-w-0",
-                  !value.entity_id && "text-white/40"
-                )}
-              >
-                <span className="truncate">
-                  {value.entity_id
-                    ? (filteredDevices.find(d => d.entity_id === value.entity_id)?.name || value.entity_id)
-                    : "Chọn thiết bị..."}
-                </span>
-                <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent 
-              className="sm:w-80 p-0 bg-transparent border-slate-900/10 rounded-sm shadow-2xl backdrop-blur-sm overflow-hidden"
-              onWheel={(e) => e.stopPropagation()}
-            >
-              <Command className="bg-[#1e293b] text-white">
-                <CommandInput placeholder="Tìm thiết bị..." className="text-white border-slate-800/30 text-xs" />
-                <CommandList 
-                  className="max-h-56 overflow-y-auto"
+        <div className="flex items-center gap-2.5 flex-row w-full sm:w-84">
+            {/* Thiết bị */}
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className={cn(
+                    "flex-1 justify-between bg-slate-800/40 border-slate-700/50 rounded-sm h-9 font-medium text-xs hover:bg-slate-700/50 text-left px-3 hover:text-white truncate min-w-0",
+                    !value.entity_id && "text-white/40"
+                  )}
                 >
-                  <CommandEmpty>Không tìm thấy.</CommandEmpty>
-                  <CommandGroup>
-                    {filteredDevices.map((device) => (
-                      <CommandItem
-                        key={device.entity_id}
-                        value={`${device.name} ${device.entity_id}`}
-                        onSelect={() => handleDeviceSelect(device)}
-                        className="flex flex-col items-start gap-0.5 py-2 px-3 aria-selected:bg-white/10 cursor-pointer"
-                      >
-                        <div className="flex items-center w-full justify-between">
-                          <span className="font-medium text-xs text-white">{device.name}</span>
-                          {value.entity_id === device.entity_id && (
-                            <Check className="h-3.5 w-3.5 text-emerald-400" />
-                          )}
-                        </div>
-                        <span className="text-[10px] text-white/40 font-mono">{device.entity_id}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-
+                  <span className="truncate">
+                    {value.entity_id
+                      ? (filteredDevices.find(d => d.entity_id === value.entity_id)?.name || value.entity_id)
+                      : "Chọn thiết bị..."}
+                  </span>
+                  <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="sm:w-80 p-0 bg-transparent border-slate-900/10 rounded-sm shadow-2xl backdrop-blur-sm overflow-hidden"
+                onWheel={(e) => e.stopPropagation()}
+              >
+                <Command className="bg-[#1e293b] text-white">
+                  <CommandInput placeholder="Tìm thiết bị..." className="text-white border-slate-800/30 text-xs" />
+                  <CommandList 
+                    className="max-h-56 overflow-y-auto"
+                  >
+                    <CommandEmpty>Không tìm thấy.</CommandEmpty>
+                    <CommandGroup>
+                      {filteredDevices.map((device) => (
+                        <CommandItem
+                          key={device.entity_id}
+                          value={`${device.name} ${device.entity_id}`}
+                          onSelect={() => handleDeviceSelect(device)}
+                          className="flex flex-col items-start gap-0.5 py-2 px-3 aria-selected:bg-white/10 cursor-pointer"
+                        >
+                          <div className="flex items-center w-full justify-between">
+                            <span className="font-medium text-xs text-white">{device.name}</span>
+                            {value.entity_id === device.entity_id && (
+                              <Check className="h-3.5 w-3.5 text-emerald-400" />
+                            )}
+                          </div>
+                          <span className="text-[10px] text-white/40 font-mono">{device.entity_id}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+        </div>
+        <div className="flex items-center gap-2.5 flex-row w-full">
           {/* So khớp: Đã / Không được */}
           <Select
             value={value.match}
             onValueChange={(val) => handleUpdate({ match: val as "is" | "is_not" })}
           >
-            <SelectTrigger className="w-24 sm:w-28 bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-xs font-medium">
+            <SelectTrigger className="flex flex-1 w-24 sm:w-28 bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-xs font-medium">
               <SelectValue placeholder="So khớp" />
             </SelectTrigger>
             <SelectContent className="bg-[#1e293b] border-slate-700/50 text-white rounded-sm text-xs">
@@ -133,7 +133,6 @@ export function ConditionLastStateDevice({
               <SelectItem value="is_not" className="text-xs">Không được</SelectItem>
             </SelectContent>
           </Select>
-
           {/* Trạng thái: Bật / Tắt */}
           <Select
             value={value.state}
@@ -147,9 +146,8 @@ export function ConditionLastStateDevice({
               <SelectItem value="off" className="text-xs">Tắt</SelectItem>
             </SelectContent>
           </Select>
-
           {/* Thời gian */}
-          <div className="relative w-24 sm:w-16 shrink-0">
+          <div className="relative w-16 shrink-0">
             <Input
               type="number"
               min={1}
