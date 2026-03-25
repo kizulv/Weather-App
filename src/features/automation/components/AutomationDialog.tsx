@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Pencil, Play, Zap } from "lucide-react"
+import { Loader2, Pencil, Play, Zap } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -32,6 +32,7 @@ import {
 import { AutomationActionsSection } from "./actions/AutomationActionsSection"
 import { AutomationConditionsSection } from "./conditions/AutomationConditionsSection"
 import { AutomationTriggerSection } from "./triggers/AutomationTriggerSection"
+import { apiClient } from "@/lib/api-client"
 
 interface AutomationDialogProps {
   open: boolean
@@ -85,6 +86,7 @@ export function AutomationDialog({
   const [isEditingName, setIsEditingName] = useState(false)
   const [isTestingConditions, setIsTestingConditions] = useState(false)
   const [conditionTestResult, setConditionTestResult] = useState<ConditionTestResult | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -101,8 +103,7 @@ export function AutomationDialog({
   useEffect(() => {
     const fetchDevices = async () => {
       try {
-        const res = await fetch("/api/home-assistant/devices")
-        const json = await res.json()
+        const json = await apiClient<{ success: boolean; data: Device[] }>("/api/home-assistant/devices")
         if (json.success) setDevices(json.data)
       } catch (err) {
         console.error("Lỗi fetch devices:", err)
@@ -149,7 +150,7 @@ export function AutomationDialog({
   const updateCondition = (index: number, nextCondition: Condition) => {
     setConditions(
       conditions.map((condition, i) =>
-        i === index ? normalizeCondition(nextCondition) : normalizeCondition(condition)
+        i === index ? normalizeCondition(nextCondition) : condition
       )
     )
   }
@@ -165,18 +166,20 @@ export function AutomationDialog({
     try {
       const payload: Record<string, unknown> = {
         conditions: normalizedConditions,
-        condition_mode: conditionMode,
+        mode: conditionMode,
       }
       if (!ignoreTrigger) {
         payload.trigger = trigger
       }
 
-      const res = await fetch("/api/automation/conditions/test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
-      const json = await res.json()
+      const json = await apiClient<{ success: boolean; message?: string; data?: ConditionTestResult }>(
+        "/api/automations/conditions/check",
+        {
+          method: "POST",
+          body: JSON.stringify(payload),
+        }
+      )
+      
       if (!json.success) {
         if (showToast) {
           toast.error(json.message || "Không thể kiểm thử điều kiện")
@@ -245,36 +248,6 @@ export function AutomationDialog({
     )
   }
 
-  const runAction = async (action: Action) => {
-    const isNotification = action.service.startsWith("notify.")
-
-    if (!isNotification && !action.entity_id) {
-      toast.error("Vui lòng chọn thiết bị trước khi chạy thử")
-      return
-    }
-
-    try {
-      const res = await fetch("/api/home-assistant/proxy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          service: action.service,
-          entity_id: action.entity_id,
-          title: action.title,
-          message: action.message,
-        }),
-      })
-      const json = await res.json()
-      if (json.success) {
-        toast.success(isNotification ? "Đã gửi thông báo thử nghiệm" : `Đã gửi lệnh tới ${action.entity_id}`)
-      } else {
-        toast.error(json.message || "Lỗi khi thực thi lệnh")
-      }
-    } catch (err) {
-      toast.error("Lỗi kết nối tới Home Assistant")
-      console.error(err)
-    }
-  }
 
   const runWorkflowByCondition = async () => {
     const conditionResult = await runConditionEvaluation({
@@ -301,12 +274,28 @@ export function AutomationDialog({
         ? "Điều kiện đạt, đang chạy hành động nhánh thỏa mãn..."
         : "Điều kiện không đạt, đang chạy hành động nhánh không thỏa mãn..."
     )
-    for (const action of actionsToRun) {
-      await runAction(action)
+    if (actionsToRun.length > 0) {
+      try {
+        const json = await apiClient<{ success: boolean }>(
+          "/api/automations/actions/execute",
+          {
+            method: "POST",
+            body: JSON.stringify({ actions: actionsToRun }),
+          }
+        )
+        if (json.success) {
+          toast.success(`Đã thực thi ${actionsToRun.length} hành động thành công`)
+        } else {
+          toast.error("Thực thi các hành động thất bại")
+        }
+      } catch (err) {
+        console.error("Lỗi thực thi hàng loạt:", err)
+        toast.error("Lỗi kết nối tới API Server")
+      }
     }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       setIsEditingName(true);
       toast.error("Vui lòng nhập tên tự động hóa")
@@ -332,15 +321,23 @@ export function AutomationDialog({
       return
     }
 
-    onSave({
-      name,
-      trigger,
-      conditions: normalizedConditions,
-      condition_mode: conditionMode,
-      actions: actionsWhenMatched,
-      actions_when_matched: actionsWhenMatched,
-      actions_when_unmatched: actionsWhenUnmatched,
-    })
+    setIsSaving(true)
+    try {
+      await onSave({
+        name,
+        trigger,
+        conditions: normalizedConditions,
+        condition_mode: conditionMode,
+        actions: actionsWhenMatched,
+        actions_when_matched: actionsWhenMatched,
+        actions_when_unmatched: actionsWhenUnmatched,
+      })
+    } catch (err) {
+      console.error("Lỗi khi lưu kịch bản:", err)
+      toast.error("Lỗi khi lưu kịch bản")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const hasAnyAction = actionsWhenMatched.length > 0 || actionsWhenUnmatched.length > 0
@@ -423,7 +420,6 @@ export function AutomationDialog({
             devices={devices}
             onAddAction={(type) => addAction("matched", type)}
             onRemoveAction={(index) => removeAction("matched", index)}
-            onRunAction={runAction}
             onUpdateAction={(index, patch) => updateAction("matched", index, patch)}
           />
 
@@ -433,7 +429,6 @@ export function AutomationDialog({
             devices={devices}
             onAddAction={(type) => addAction("unmatched", type)}
             onRemoveAction={(index) => removeAction("unmatched", index)}
-            onRunAction={runAction}
             onUpdateAction={(index, patch) => updateAction("unmatched", index, patch)}
           />
         </div>
@@ -459,9 +454,17 @@ export function AutomationDialog({
             )}
             <Button
               onClick={handleSave}
-              className="rounded-sm h-9 px-5 bg-emerald-600/20 border border-emerald-500/30 hover:bg-emerald-600/30 text-xs font-semibold transition-all text-white"
+              disabled={isSaving}
+              className="rounded-sm h-9 px-5 bg-emerald-600/30 border border-emerald-500/40 hover:bg-emerald-600/40 text-xs font-semibold transition-all text-white disabled:opacity-50"
             >
-              Lưu kịch bản
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  Đang lưu...
+                </>
+              ) : (
+                "Lưu kịch bản"
+              )}
             </Button>
           </div>
         </div>

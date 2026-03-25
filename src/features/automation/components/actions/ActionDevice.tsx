@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, ChevronDown, Play, Trash2 } from "lucide-react"
+import { Check, CheckCircle2, ChevronDown, Loader2, Play, Trash2, XCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -15,12 +15,13 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { Action, Device } from "@/features/automation/types/automation"
+import { apiClient } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface ActionDeviceProps {
   action: Action
   devices: Device[]
   onRemove: () => void
-  onRun: () => void
   onUpdate: (patch: Partial<Action>) => void
 }
 
@@ -28,10 +29,11 @@ export function ActionDevice({
   action,
   devices,
   onRemove,
-  onRun,
   onUpdate,
 }: ActionDeviceProps) {
   const [open, setOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
 
   // Lọc danh sách thiết bị
   const filteredDevices = devices.filter(d => 
@@ -64,6 +66,40 @@ export function ActionDevice({
     setOpen(false)
   }
 
+  const handleRun = async () => {
+    if (!action.entity_id && !action.service.startsWith("notify.")) {
+      toast.error("Vui lòng chọn thiết bị thực thi")
+      return
+    }
+
+    setIsLoading(true)
+    setStatus("idle")
+    try {
+      const json = await apiClient<{ success: boolean; data: { service: string, status: string }[] }>(
+        "/api/automations/actions/execute",
+        {
+          method: "POST",
+          body: JSON.stringify({ actions: [action] }),
+        }
+      )
+
+      if (json.success && json.data?.[0]?.status === "success") {
+        setStatus("success")
+        toast.success("Thực thi thành công")
+      } else {
+        setStatus("error")
+        toast.error("Thực thi thất bại")
+      }
+    } catch (error) {
+      console.error("Lỗi thực thi:", error)
+      setStatus("error")
+      toast.error("Lỗi kết nối tới API Server")
+    } finally {
+      setIsLoading(false)
+      setTimeout(() => setStatus("idle"), 3000)
+    }
+  }
+
   return (
     <div
       className="group/row relative flex flex-col gap-2 py-3 px-3.5 rounded-sm bg-slate-800/50 hover:bg-slate-800/60 transition-all duration-300 border border-transparent hover:border-slate-700/50"
@@ -73,11 +109,25 @@ export function ActionDevice({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5">
         <div className="flex items-center gap-2.5 flex-row w-full">
           <button
-            onClick={onRun}
+            onClick={handleRun}
+            disabled={isLoading}
             title="Chạy thử"
-            className="h-9 w-9 shrink-0 items-center justify-center rounded-sm text-slate-300 bg-amber-500/10 hover:text-amber-400 transition-all hidden sm:flex cursor-pointer"
+            className={cn(
+              "h-9 w-9 shrink-0 items-center justify-center rounded-sm transition-all hidden sm:flex cursor-pointer disabled:opacity-50",
+              status === "success" ? "bg-emerald-500/20 text-emerald-400" : 
+              status === "error" ? "bg-rose-500/20 text-rose-400" :
+              "bg-amber-500/10 text-slate-300 hover:text-amber-400"
+            )}
           >
-            <Play className="h-3.5 w-3.5 fill-current" />
+            {isLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : status === "success" ? (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            ) : status === "error" ? (
+              <XCircle className="h-3.5 w-3.5" />
+            ) : (
+              <Play className="h-3.5 w-3.5 fill-current" />
+            )}
           </button>
           <Select
             value={currentActionType}
@@ -152,12 +202,28 @@ export function ActionDevice({
         </div>
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
           <button
-            onClick={onRun}
+            onClick={handleRun}
+            disabled={isLoading}
             title="Chạy thử"
-            className="flex h-9 w-1/2 sm:w-9 items-center justify-center rounded-sm text-slate-300 bg-amber-500/10 hover:text-amber-400 transition-all sm:hidden cursor-pointer"
+            className={cn(
+              "flex h-9 w-1/2 sm:w-9 items-center justify-center rounded-sm transition-all sm:hidden cursor-pointer disabled:opacity-50",
+              status === "success" ? "bg-emerald-500/20 text-emerald-400" : 
+              status === "error" ? "bg-rose-500/20 text-rose-400" :
+              "bg-amber-500/10 text-slate-300 hover:text-amber-400"
+            )}
           >
-            <Play className="h-3.5 w-3.5 fill-current" />
-            <span className="text-xs pl-1 sm:hidden">Chạy thử</span>
+            {isLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : status === "success" ? (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            ) : status === "error" ? (
+              <XCircle className="h-3.5 w-3.5" />
+            ) : (
+              <Play className="h-3.5 w-3.5 fill-current" />
+            )}
+            <span className="text-xs pl-1 sm:hidden">
+              {isLoading ? "Đang chạy..." : status === "success" ? "Thành công" : status === "error" ? "Lỗi" : "Chạy thử"}
+            </span>
           </button>
           <button
             onClick={onRemove}

@@ -2,14 +2,15 @@
  * Shared API Client for api.pcthanh.com
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.WEATHER_API_BASE_URL;
+const API_BASE_URL = process.env.WEATHER_API_BASE_URL || "";
 
 export async function apiClient<T = unknown>(
   endpoint: string,
   options: RequestInit = {},
   token?: string
 ): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  const baseUrl = API_BASE_URL;
+  const url = `${baseUrl}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
   
   const headers = new Headers(options.headers);
   if (!headers.has("Content-Type")) {

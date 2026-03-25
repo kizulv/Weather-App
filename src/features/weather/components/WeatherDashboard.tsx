@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { apiClient } from "@/lib/api-client";
 
 const WeatherChart = dynamic(
   () => import("./WeatherChart").then((mod) => mod.WeatherChart),
@@ -46,8 +47,7 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
 
   const fetchAutomations = useCallback(async () => {
     try {
-      const res = await fetch("/api/automation");
-      const json = await res.json();
+      const json = await apiClient<{ success: boolean; data: Automation[] }>("/api/automations");
       if (json.success) setAutomations(json.data);
     } catch (err) {
       console.error("Lỗi fetch automations:", err);
@@ -56,8 +56,7 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
 
   const fetchDevices = useCallback(async () => {
     try {
-      const res = await fetch("/api/home-assistant/devices");
-      const json = await res.json();
+      const json = await apiClient<{ success: boolean; data: Device[] }>("/api/home-assistant/devices");
       if (json.success) setDevices(json.data);
     } catch (err) {
       console.error("Lỗi fetch devices:", err);
@@ -76,16 +75,14 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
   const handleSaveAutomation = async (data: Partial<Automation>) => {
     try {
       const isEdit = !!selectedAutomation;
-      const url = isEdit ? `/api/automation/${selectedAutomation?._id}` : "/api/automation";
+      const url = isEdit ? `/api/automations/${selectedAutomation?._id}` : "/api/automations";
       const method = isEdit ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const json = await apiClient<{ success: boolean; message?: string }>(url, {
         method,
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      const json = await res.json();
       if (json.success) {
         toast.success(isEdit ? "Cập nhật thành công" : "Tạo mới thành công");
         setIsDialogOpen(false);
@@ -108,13 +105,10 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
     setAutomations(prev => prev.map(a => a._id === id ? { ...a, enabled } : a));
 
     try {
-      const res = await fetch(`/api/automation/${id}`, {
+      const json = await apiClient<{ success: boolean; message?: string }>(`/api/automations/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        // Gửi toàn bộ dữ liệu automation nhưng với giá trị enabled mới
         body: JSON.stringify({ ...currentAutomation, enabled }),
       });
-      const json = await res.json();
       
       if (!json.success) {
         // Hoàn tác nếu server báo lỗi
@@ -132,8 +126,7 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
   const handleDeleteAutomation = async (id: string) => {
     if (!confirm("Bạn có chắc chắn muốn xóa tự động hóa này?")) return;
     try {
-      const res = await fetch(`/api/automation/${id}`, { method: "DELETE" });
-      const json = await res.json();
+      const json = await apiClient<{ success: boolean }> (`/api/automations/${id}`, { method: "DELETE" });
       if (json.success) {
         toast.success("Đã xóa");
         fetchAutomations();
@@ -145,10 +138,9 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
 
   const handleRunAutomation = async (id: string) => {
     try {
-      const res = await fetch(`/api/automation/${id}/run`, {
+      const json = await apiClient<{ success: boolean; message?: string }>(`/api/automations/${id}/execute`, {
         method: "POST"
       });
-      const json = await res.json();
       if (json.success) {
         toast.success("Đã kích hoạt kịch bản");
         fetchAutomations(); // Refresh list to get new last_ran_at
@@ -186,31 +178,15 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
     }
   }, []);
 
-  // Auto-refresh mỗi 60 giây và kiểm tra automation
+  // Auto-refresh mỗi 60 giây (không còn check automation tại đây)
   useEffect(() => {
-    const checkAutomations = async () => {
-      try {
-        const res = await fetch("/api/automation/check");
-        const json = await res.json();
-        if (json.executedCount > 0) {
-          fetchAutomations(); // Refresh list to update last_ran_at on card
-        }
-      } catch (err) {
-        console.error("Lỗi check automation:", err);
-      }
-    };
-
     const dataTimer = setInterval(() => {
       refreshWeatherData();
-      checkAutomations();
       fetchDevices();
     }, 60000);
 
-    // Chạy lần đầu
-    checkAutomations();
-
     return () => clearInterval(dataTimer);
-  }, [refreshWeatherData, fetchAutomations, fetchDevices]);
+  }, [refreshWeatherData, fetchDevices]);
 
   // Nếu không có initial data (fallback), fetch lần đầu từ client
   useEffect(() => {

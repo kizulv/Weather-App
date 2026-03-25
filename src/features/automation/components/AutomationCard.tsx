@@ -6,7 +6,7 @@ import { Zap, Clock, Trash2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Action, Device } from "@/features/automation/types/automation";
-import { resolveAutomationActionBranches } from "@/features/automation/server/action-branches";
+import { resolveAutomationActionBranches } from "../utils/action-branches";
 
 import { serviceLabels } from "./shared/service-labels";
 

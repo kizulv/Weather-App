@@ -11,22 +11,18 @@ async function getAuthToken() {
 }
 
 /**
- * Proxy POST /home-assistant/proxy
+ * Proxy POST /automations/:id/execute
  */
-export async function POST(req: Request) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const token = await getAuthToken();
   if (!token) return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
   try {
-    const body = await req.json();
-    const data = await apiClient("/home-assistant/proxy", { 
-      method: "POST", 
-      body: JSON.stringify(body) 
-    }, token);
+    const data = await apiClient(`/automations/${id}/execute`, { method: "POST" }, token);
     return NextResponse.json(data);
   } catch (error: unknown) {
     const err = error as { message?: string; status?: number };
-    console.error("Lỗi HA Proxy:", err);
     return NextResponse.json({ success: false, message: err.message || "Lỗi hệ thống" }, { status: err.status || 500 });
   }
 }

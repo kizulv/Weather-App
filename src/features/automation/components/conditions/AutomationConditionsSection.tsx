@@ -160,63 +160,25 @@ export function normalizeCondition(condition?: Condition): Condition {
 }
 
 export interface ConditionTestItem {
-  index: number
   type: ConditionType
-  hours: number
-  operator: ConditionOperator
-  threshold: number
-  actual: number | string | null
+  condition: string
+  actual: string
+  target: string
   passed: boolean
-  sampleCount: number
-  windowStartMs: number
-  windowEndMs: number
-  // Fields for last_state_device
-  entity_id?: string
-  target_state?: string
-  match_type?: string
-  minutes?: number
-  last_occurrence_at?: number
+  time_range: string
+  sample_count?: number
+  last_occurrence?: string
 }
 
 export interface ConditionTestResult {
-  mode: ConditionMode
   matched: boolean
-  items: ConditionTestItem[]
-  hasEvaluableConditions: boolean
-  tested_at: string
-  window_end: string | null
+  details: ConditionTestItem[]
+  hasEvaluableConditions?: boolean
+  window_end?: string | null
 }
 
 // --- Sub-components ---
-function ConditionTestResultDisplay({ result, devices }: { result: ConditionTestResult, devices: Device[] }) {
-  const formatConditionActual = (item: ConditionTestItem) => {
-    if (item.actual === null) return "Không có dữ liệu"
-    if (item.type === "last_state_device") return item.passed ? "Đúng" : "Sai"
-    if (typeof item.actual === "number") {
-      if (item.type === "average_temperature") return `${item.actual.toFixed(2)}°C`
-      if (item.type === "rain_minutes") return `${item.actual.toFixed(0)} phút`
-      return `${item.actual.toFixed(2)} giờ`
-    }
-    return String(item.actual)
-  }
-
-  const formatConditionThreshold = (item: ConditionTestItem) => {
-    if (item.type === "last_state_device") {
-      const deviceName = devices.find(d => d.entity_id === item.entity_id)?.name || item.entity_id
-      const matchLabel = item.match_type === "is" ? "phải" : "không được"
-      const stateLabel = item.target_state === "on" ? "Bật" : "Tắt"
-      return `${deviceName} ${matchLabel} ${stateLabel}`
-    }
-    const suffix = CONDITION_CONFIG[item.type]?.thresholdSuffix || ""
-    return `${item.operator} ${item.threshold}${suffix}`
-  }
-
-  const formatWindowLabel = (item: ConditionTestItem) => {
-    const windowStart = new Date(item.windowStartMs)
-    const windowEnd = new Date(Math.max(item.windowStartMs, item.windowEndMs - 60000))
-    return `${windowStart.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })} - ${windowEnd.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}`
-  }
-
+function ConditionTestResultDisplay({ result }: { result: ConditionTestResult, devices: Device[] }) {
   return (
     <div className="space-y-2 rounded-sm border border-white/10 bg-slate-950/30 p-3">
       <div className="flex items-center justify-between">
@@ -225,26 +187,28 @@ function ConditionTestResultDisplay({ result, devices }: { result: ConditionTest
           {result.matched ? "Đạt" : "Không đạt"}
         </span>
       </div>
-      {result.window_end && (
-        <p className="text-[11px] text-white/40">Mốc đánh giá: {new Date(result.window_end).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</p>
-      )}
-      {!result.hasEvaluableConditions && <p className="text-[11px] text-white/40">Không có điều kiện hợp lệ để kiểm thử.</p>}
-      {result.items.map((item) => (
-        <div key={`${item.type}-${item.index}`} className="rounded-sm border border-white/10 bg-slate-900/40 p-2.5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-white">{CONDITION_CONFIG[item.type]?.label || item.type}</p>
-            <span className={cn("text-[10px] font-bold uppercase tracking-wider", item.passed ? "text-emerald-300" : "text-rose-300")}>{item.passed ? "Đạt" : "Không đạt"}</span>
+      
+      {result.details?.map((item: ConditionTestItem, idx: number) => {
+        const cleanTarget = item.target?.replace(/(bật|tắt)\s+\1/gi, "$1")
+        return (
+          <div key={`${item.type}-${idx}`} className="rounded-sm border border-white/10 bg-slate-900/40 p-2.5">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-white">{item.condition}</p>
+              <span className={cn("text-[10px] font-bold uppercase tracking-wider", item.passed ? "text-emerald-300" : "text-rose-300")}>{item.passed ? "Đạt" : "Không đạt"}</span>
+            </div>
+            <p className="mt-1 text-[11px] text-white/60">Thực tế: <span className="text-white">{item.actual}</span> | Mục tiêu: <span className="text-white">{cleanTarget}</span></p>
+            <p className="text-[11px] text-white/60">
+              Thời gian: {item.time_range} 
+              {item.sample_count !== undefined && ` | Số mẫu: ${item.sample_count}`}
+              {item.last_occurrence && (
+                <span className="opacity-80">
+                  {` | Đã ${cleanTarget?.toLowerCase().includes("tắt") ? "tắt" : "bật"} lúc: ${item.last_occurrence}`}
+                </span>
+              )}
+            </p>
           </div>
-          <p className="mt-1 text-[11px] text-white/60">Thực tế: {formatConditionActual(item)} | Mục tiêu: {formatConditionThreshold(item)}</p>
-          <p className="text-[11px] text-white/60">Thời gian: từ {formatWindowLabel(item)} {item.type === "last_state_device" ? "" : `| Số mẫu: ${item.sampleCount}`} 
-          {item.type === "last_state_device" && item.last_occurrence_at && (
-            <>
-              | {item.target_state === "on" ? "Bật" : "Tắt"} gần nhất lúc {new Date(item.last_occurrence_at).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </>
-          )}
-          </p>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

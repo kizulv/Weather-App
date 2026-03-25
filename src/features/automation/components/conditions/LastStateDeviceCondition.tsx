@@ -129,7 +129,7 @@ export function ConditionLastStateDevice({
               <SelectValue placeholder="So khớp" />
             </SelectTrigger>
             <SelectContent className="bg-[#1e293b] border-slate-700/50 text-white rounded-sm text-xs">
-              <SelectItem value="is" className="text-xs">Đã</SelectItem>
+              <SelectItem value="is" className="text-xs">Được</SelectItem>
               <SelectItem value="is_not" className="text-xs">Không được</SelectItem>
             </SelectContent>
           </Select>

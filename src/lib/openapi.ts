@@ -45,7 +45,7 @@ export function generateOpenApiSpec() {
     },
     servers: [
       {
-        url: "/api/v1", // Đổi lại thành /api/v1 cho đúng folder structure nếu cần, hoặc giữ /v1 tùy config
+        url: "v1", // Đổi lại thành /api/v1 cho đúng folder structure nếu cần, hoặc giữ /v1 tùy config
         description: "V1 API",
       },
     ],

@@ -1,17 +1,18 @@
 import { useState } from "react"
-import { Bell, Check, ChevronDown, Play, Trash2 } from "lucide-react"
+import { Bell, Check, CheckCircle2, ChevronDown, Loader2, Play, Trash2, XCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Action, Device } from "@/features/automation/types/automation"
+import { apiClient } from "@/lib/api-client"
+import { toast } from "sonner"
 
 interface NotificationProps {
   action: Action
   devices: Device[]
   onRemove: () => void
-  onRun: () => void
   onUpdate: (patch: Partial<Action>) => void
 }
 
@@ -19,14 +20,53 @@ export function ActionNotification({
   action,
   devices,
   onRemove,
-  onRun,
   onUpdate,
 }: NotificationProps) {
   const [open, setOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
 
   // Lọc danh sách dịch vụ thông báo (notify.*)
   const notifyDevices = devices.filter(d => d.entity_id.startsWith("notify."))
   const currentDevice = devices.find(d => d.entity_id === action.entity_id)
+
+  const handleRun = async () => {
+    if (!action.entity_id && !action.service.startsWith("notify.")) {
+      toast.error("Vui lòng chọn thiết bị nhận thông báo")
+      return
+    }
+    if (!action.message) {
+      toast.error("Vui lòng nhập nội dung tin nhắn")
+      return
+    }
+
+    setIsLoading(true)
+    setStatus("idle")
+    try {
+      const json = await apiClient<{ success: boolean; data: { service: string, status: string }[] }>(
+        "/api/automations/actions/execute",
+        {
+          method: "POST",
+          body: JSON.stringify({ actions: [action] }),
+        }
+      )
+
+      if (json.success && json.data?.[0]?.status === "success") {
+        setStatus("success")
+        toast.success("Đã gửi thông báo thử nghiệm")
+      } else {
+        setStatus("error")
+        toast.error("Gửi thông báo thất bại")
+      }
+    } catch (error) {
+      console.error("Lỗi thực thi:", error)
+      setStatus("error")
+      toast.error("Lỗi kết nối tới API Server")
+    } finally {
+      setIsLoading(false)
+      setTimeout(() => setStatus("idle"), 3000)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-2 py-3 px-3.5 rounded-sm bg-slate-800/50 hover:bg-slate-800/60 transition-all duration-300 border border-transparent hover:border-slate-700/50">
@@ -142,12 +182,28 @@ export function ActionNotification({
         {/* Mobile Actions & Trash only Desktop */}
         <div className="flex flex-row sm:flex-col items-center gap-2.5 w-full sm:w-auto shrink-0">
           <button
-            onClick={onRun}
+            onClick={handleRun}
+            disabled={isLoading}
             title="Chạy thử"
-            className="flex h-9 w-1/2 sm:w-9 items-center justify-center rounded-sm text-slate-300 bg-amber-500/10 hover:text-amber-400 transition-all cursor-pointer"
+            className={cn(
+              "flex h-9 w-1/2 sm:w-9 items-center justify-center rounded-sm transition-all cursor-pointer disabled:opacity-50",
+              status === "success" ? "bg-emerald-500/20 text-emerald-400" : 
+              status === "error" ? "bg-rose-500/20 text-rose-400" :
+              "bg-amber-500/10 text-slate-300 hover:text-amber-400"
+            )}
           >
-            <Play className="h-3.5 w-3.5 fill-current" />
-            <span className="text-xs pl-1 sm:hidden">Chạy thử</span>
+            {isLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : status === "success" ? (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            ) : status === "error" ? (
+              <XCircle className="h-3.5 w-3.5" />
+            ) : (
+              <Play className="h-3.5 w-3.5 fill-current" />
+            )}
+            <span className="text-xs pl-1 sm:hidden">
+              {isLoading ? "Đang gửi..." : status === "success" ? "Đã gửi" : status === "error" ? "Lỗi" : "Chạy thử"}
+            </span>
           </button>
           <button
             onClick={onRemove}

@@ -1,41 +1,46 @@
 import { cookies } from "next/headers";
-import { Automation, Device } from "@/features/automation/types/automation";
 import { apiClient } from "@/lib/api-client";
+import { verifyToken } from "@/lib/auth/jwt";
+import { Automation, Device } from "../types/automation";
 
 /**
- * Đọc danh sách automations từ API ngoại.
- * Dùng trong Server Component.
+ * Lấy danh sách Automation từ API External.
+ * Hàm này dùng cho Server Component (page.tsx).
  */
 export async function getAutomationsFromDB(): Promise<Automation[]> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+
+  if (!token) return [];
+
+  const payload = await verifyToken(token);
+  if (!payload) return [];
+
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
-
-    if (!token) return [];
-
-    const response = await apiClient<{ success: boolean; data?: Automation[] }>("/automations", { method: "GET" }, token);
-    return response.data || [];
+    const response = await apiClient("/automations", { method: "GET" }, token) as { success: boolean; data: Automation[] };
+    return response.success ? response.data : [];
   } catch (error) {
-    console.error("Lỗi đọc automations từ API:", error);
+    console.error("Lỗi khi fetch Automations cho SSR:", error);
     return [];
   }
 }
 
 /**
- * Đọc danh sách devices từ API ngoại.
- * Dùng trong Server Component.
+ * Lấy danh sách Devices từ API External (thông qua HA proxy hoặc endpoint devices).
+ * Hàm này dùng cho Server Component (page.tsx).
  */
 export async function getDevicesFromDB(): Promise<Device[]> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+
+  if (!token) return [];
+
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
-
-    if (!token) return [];
-
-    const response = await apiClient<{ success: boolean; data?: Device[] }>("/home-assistant/devices", { method: "GET" }, token);
-    return response.data || [];
+    // Gọi endpoint lấy danh sách thiết bị từ Home Assistant proxy trên Server API
+    const response = await apiClient("/home-assistant/devices", { method: "GET" }, token) as { success: boolean; data: Device[] };
+    return response.success ? response.data : [];
   } catch (error) {
-    console.error("Lỗi đọc devices từ API:", error);
+    console.error("Lỗi khi fetch Devices cho SSR:", error);
     return [];
   }
 }

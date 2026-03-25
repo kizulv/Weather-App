@@ -24,9 +24,10 @@ export async function GET() {
       data: response.data || [] 
     });
 
-  } catch (error) {
-    console.error("Lỗi lấy danh sách thiết bị từ API:", error);
-    return NextResponse.json({ success: false, message: "Lỗi hệ thống" }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as { message?: string; status?: number };
+    console.error("Lỗi lấy danh sách thiết bị từ API:", err);
+    return NextResponse.json({ success: false, message: err.message || "Lỗi hệ thống" }, { status: err.status || 500 });
   }
 }
 

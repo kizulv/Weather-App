@@ -18,7 +18,6 @@ interface AutomationActionsSectionProps {
   devices: Device[]
   onAddAction: (type: "device" | "notification") => void
   onRemoveAction: (index: number) => void
-  onRunAction: (action: Action) => void
   onUpdateAction: (index: number, patch: Partial<Action>) => void
 }
 
@@ -28,7 +27,6 @@ export function AutomationActionsSection({
   devices,
   onAddAction,
   onRemoveAction,
-  onRunAction,
   onUpdateAction,
 }: AutomationActionsSectionProps) {
   return (
@@ -93,7 +91,6 @@ export function AutomationActionsSection({
                   action={action}
                   devices={devices}
                   onRemove={() => onRemoveAction(idx)}
-                  onRun={() => onRunAction(action)}
                   onUpdate={(patch: Partial<Action>) => onUpdateAction(idx, patch)}
                 />
               )
@@ -105,7 +102,6 @@ export function AutomationActionsSection({
                 action={action}
                 devices={devices}
                 onRemove={() => onRemoveAction(idx)}
-                onRun={() => onRunAction(action)}
                 onUpdate={(patch: Partial<Action>) => onUpdateAction(idx, patch)}
               />
             )
