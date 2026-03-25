@@ -1,6 +1,6 @@
 import {
   HelpCircle,
-  LayoutDashboard,
+  CloudSun,
   Settings,
   type LucideIcon,
 } from "lucide-react"
@@ -21,7 +21,7 @@ export const sidebarMainNav: SidebarNavItem[] = [
     key: "weather",
     title: "Thời tiết",
     url: APP_ROUTES.weather,
-    icon: LayoutDashboard,
+    icon: CloudSun,
     matchMode: "prefix",
   },
 ]

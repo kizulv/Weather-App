@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import {
-  LayoutDashboard,
   Bell,
   LogOut,
   ChevronUp,
@@ -12,7 +11,6 @@ import {
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -80,95 +78,9 @@ export function AppSidebar() {
   }
 
   return (
-<Sidebar className="z-40">
-      <SidebarHeader className="p-8 pb-4">
-        <div className="flex items-center gap-3.5 group cursor-default">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500/20 to-emerald-500/20 text-white border border-white/10 shadow-2xl transition-all duration-500 group-hover:scale-105 group-hover:border-blue-500/30">
-            <LayoutDashboard className="h-5 w-5 text-blue-400" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-black tracking-tight text-white uppercase leading-tight">Weather <span className="text-blue-400">AI</span></span>
-            <span className="text-[10px] font-bold text-white/30 tracking-[0.2em] uppercase leading-none">Intelligence</span>
-          </div>
-        </div>
-      </SidebarHeader>
-      
-      <SidebarContent className="px-4 py-4 space-y-6 no-scrollbar relative overflow-hidden">
-        {/* Subtle glow inside content */}
-        <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-        
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-white/30 text-[10px] uppercase tracking-[0.2em] font-bold px-3 mb-2">Tổng quan</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-2">
-              {sidebarMainNav.map((item) => {
-                const isActive = isNavItemActive(item)
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={item.title}
-                      className={cn(
-                        "h-11 px-3 rounded-xl transition-all duration-200 group",
-                        isActive
-                          ? "bg-white/10 text-white shadow-sm"
-                          : "hover:bg-white/5 text-white/40 hover:text-white"
-                      )}
-                    >
-                      <a href={item.url} className="flex items-center gap-3">
-                        <item.icon className={cn("h-4 w-4", isActive ? "text-blue-400" : "text-white/40 group-hover:text-white/70")} />
-                        <span className="font-semibold tracking-tight text-sm">{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-white/30 text-[10px] uppercase tracking-[0.2em] font-bold px-3 mb-2">Hỗ trợ</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-2">
-              {sidebarSecondaryNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  {item.key === "settings" ? (
-                    <SettingsDialog>
-                      <SidebarMenuButton 
-                        size="default" 
-                        tooltip={item.title} 
-                        className="h-11 px-3 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-all duration-200 group w-full"
-                      >
-                        <div className="flex items-center gap-3 w-full">
-                          <item.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-105" />
-                          <span className="font-semibold text-sm tracking-tight">{item.title}</span>
-                        </div>
-                      </SidebarMenuButton>
-                    </SettingsDialog>
-                  ) : (
-                    <SidebarMenuButton 
-                      asChild 
-                      size="default" 
-                      tooltip={item.title} 
-                      className="h-11 px-3 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-all duration-200 group"
-                    >
-                      <a href={item.url} className="flex items-center gap-3">
-                        <item.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-105" />
-                        <span className="font-semibold text-sm tracking-tight">{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  )}
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="px-4 h-15 p-0 flex items-center justify-center bg-white/3 backdrop-blur-xl border-t border-white/0">
-        <SidebarMenu className="w-full">
+<Sidebar collapsible="icon" className="z-40">
+      <SidebarHeader className="px-4 pt-4 group-data-[collapsible=icon]:px-0">
+        <SidebarMenu className="w-full group-data-[collapsible=icon]:items-center">
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -176,22 +88,23 @@ export function AppSidebar() {
                   size="lg"
                   className="h-14 rounded-xl px-2 justify-center hover:bg-white/5 active:bg-white/10 transition-all duration-200 group data-[state=open]:bg-white/10"
                 >
-                  <Avatar className="h-9 w-9 rounded-lg border border-white/10 shadow-lg flex-none">
+                  <Avatar className="h-9 w-9 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 rounded-lg border border-white/10 shadow-lg shrink-0">
                     <AvatarImage src="https://github.com/shadcn.png" alt="User" />
                     <AvatarFallback className="bg-blue-500/20 text-blue-400 font-bold text-xs">
                       {user?.name ? user.name.substring(0, 2).toUpperCase() : "..."}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="grid text-left text-sm leading-tight ml-3 flex-none">
+                  <div className="grid text-left text-sm leading-tight ml-3 shrink-0 group-data-[collapsible=icon]:hidden">
                     <span className="truncate font-bold text-white/90 tracking-tight text-xs">{user?.name || "Đang tải..."}</span>
                     <span className="truncate text-[10px] text-white/30 font-medium tracking-wide">{user?.role || "..."}</span>
                   </div>
-                  <ChevronUp className="h-3.5 w-3.5 text-white/20 group-hover:text-white/40 transition-colors ml-2 flex-none" />
+                  <ChevronUp className="h-3.5 w-3.5 text-white/20 group-hover:text-white/40 transition-colors ml-2 shrink-0 group-data-[collapsible=icon]:hidden" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                side="top"
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-64 rounded-3xl bg-[#0f172a]/90 backdrop-blur-2xl border-white/10 text-white shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 mb-2"
+                side="right"
+                align="start"
+                className="w-64 rounded-3xl bg-[#0f172a]/90 backdrop-blur-2xl border-white/10 text-white shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 ml-2"
               >
                 <div className="px-4 py-3 border-b border-white/5 mb-2">
                   <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Tài khoản</p>
@@ -216,7 +129,82 @@ export function AppSidebar() {
             </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarFooter>
+      </SidebarHeader>
+      
+      <SidebarContent className="px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-4 no-scrollbar relative overflow-hidden">
+        {/* Subtle glow inside content */}
+        <div className="absolute top-0 left-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+        
+        <SidebarGroup className="group-data-[collapsible=icon]:p-0">
+          <SidebarGroupLabel className="text-white/30 text-[10px] uppercase tracking-[0.2em] font-bold px-3 mb-2 group-data-[collapsible=icon]:hidden">Tổng quan</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-2 group-data-[collapsible=icon]:items-center">
+              {sidebarMainNav.map((item) => {
+                const isActive = isNavItemActive(item)
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={item.title}
+                      className={cn(
+                        "h-11 px-3 rounded-xl transition-all duration-200 group",
+                        isActive
+                          ? "bg-white/10 text-white shadow-sm"
+                          : "hover:bg-white/5 text-white/40 hover:text-white"
+                      )}
+                    >
+                      <a href={item.url} className="flex items-center gap-3">
+                        <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-white/40 group-hover:text-white/70")} />
+                        <span className="font-semibold tracking-tight text-sm group-data-[collapsible=icon]:hidden">{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        <SidebarGroup className="group-data-[collapsible=icon]:p-0">
+          <SidebarGroupLabel className="text-white/30 text-[10px] uppercase tracking-[0.2em] font-bold px-3 mb-2 group-data-[collapsible=icon]:hidden">Hỗ trợ</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-2 group-data-[collapsible=icon]:items-center">
+              {sidebarSecondaryNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  {item.key === "settings" ? (
+                    <SettingsDialog>
+                      <SidebarMenuButton 
+                        size="default" 
+                        tooltip={item.title} 
+                        className="h-11 px-3 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-all duration-200 group w-full"
+                      >
+                        <div className="flex items-center gap-3 w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
+                          <item.icon className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-105" />
+                          <span className="font-semibold text-sm tracking-tight group-data-[collapsible=icon]:hidden">{item.title}</span>
+                        </div>
+                      </SidebarMenuButton>
+                    </SettingsDialog>
+                  ) : (
+                    <SidebarMenuButton 
+                      asChild 
+                      size="default" 
+                      tooltip={item.title} 
+                      className="h-11 px-3 rounded-xl hover:bg-white/5 text-white/40 hover:text-white transition-all duration-200 group"
+                    >
+                      <a href={item.url} className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
+                        <item.icon className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-105" />
+                        <span className="font-semibold text-sm tracking-tight group-data-[collapsible=icon]:hidden">{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  )}
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
     </Sidebar>
   )
 }

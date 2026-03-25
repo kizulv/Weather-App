@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+export const dynamic = "force-dynamic"
 import { WeatherDashboard } from "@/features/weather/components/WeatherDashboard"
 import { getWeatherDataFromCookies } from "@/features/weather/server/weather-fetch"
 import { getAutomationsFromDB, getDevicesFromDB } from "@/features/automation/server/automation-fetch"
