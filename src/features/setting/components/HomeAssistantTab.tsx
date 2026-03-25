@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { getHAConfigAction, testHAConnectionAction } from "@/features/setting/home-assistant.actions";
 
 export function HomeAssistantTab() {
   const [haUrl, setHaUrl] = useState("");
@@ -18,8 +19,7 @@ export function HomeAssistantTab() {
   // Hàm lấy cấu hình đã lưu
   const fetchConfig = useCallback(async () => {
     try {
-      const response = await fetch("/api/home-assistant/config");
-      const result = await response.json();
+      const result = await getHAConfigAction();
       if (result.success && result.data) {
         setHaUrl(result.data.url || "");
         setHaToken(result.data.token || "");
@@ -44,23 +44,15 @@ export function HomeAssistantTab() {
     setTestResult(null);
 
     try {
-      const response = await fetch("/api/home-assistant/test", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url: haUrl, haToken: haToken }),
-      });
-
-      const data = await response.json();
+      const data = await testHAConnectionAction(haUrl, haToken);
 
       if (data.success) {
         setTestResult({ 
           success: true, 
-          message: `Kết nối thành công! Đã đồng bộ ${data.deviceCount} dữ liệu.`,
+          message: data.message || "Kết nối thành công!",
           count: data.deviceCount 
         });
-        toast.success("Kết nối Home Assistant thành công");
+        toast.success(data.message || "Kết nối Home Assistant thành công");
       } else {
         setTestResult({ success: false, message: data.message || "Kết nối thất bại" });
         toast.error(data.message || "Kết nối thất bại");

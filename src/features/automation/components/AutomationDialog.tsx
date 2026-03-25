@@ -32,7 +32,11 @@ import {
 import { AutomationActionsSection } from "./actions/AutomationActionsSection"
 import { AutomationConditionsSection } from "./conditions/AutomationConditionsSection"
 import { AutomationTriggerSection } from "./triggers/AutomationTriggerSection"
-import { apiClient } from "@/lib/api-client"
+import { 
+  checkConditionsAction, 
+  executeActionsAction 
+} from "@/features/automation/automation.actions"
+import { getHADevicesAction } from "@/features/setting/home-assistant.actions"
 
 interface AutomationDialogProps {
   open: boolean
@@ -102,12 +106,8 @@ export function AutomationDialog({
 
   useEffect(() => {
     const fetchDevices = async () => {
-      try {
-        const json = await apiClient<{ success: boolean; data: Device[] }>("/api/home-assistant/devices")
-        if (json.success) setDevices(json.data)
-      } catch (err) {
-        console.error("Lỗi fetch devices:", err)
-      }
+      const result = await getHADevicesAction()
+      if (result.success) setDevices(result.data || [])
     }
 
     if (open) fetchDevices()
@@ -164,39 +164,29 @@ export function AutomationDialog({
   } = {}) => {
     setIsTestingConditions(true)
     try {
-      const payload: Record<string, unknown> = {
+      const result = await checkConditionsAction({
         conditions: normalizedConditions,
         mode: conditionMode,
-      }
-      if (!ignoreTrigger) {
-        payload.trigger = trigger
-      }
-
-      const json = await apiClient<{ success: boolean; message?: string; data?: ConditionTestResult }>(
-        "/api/automations/conditions/check",
-        {
-          method: "POST",
-          body: JSON.stringify(payload),
-        }
-      )
+        trigger: ignoreTrigger ? undefined : trigger
+      })
       
-      if (!json.success) {
+      if (!result.success) {
         if (showToast) {
-          toast.error(json.message || "Không thể kiểm thử điều kiện")
+          toast.error(result.message || "Không thể kiểm thử điều kiện")
         }
         return null
       }
 
-      const result = json.data as ConditionTestResult
-      setConditionTestResult(result)
+      const testResult = result.data as ConditionTestResult
+      setConditionTestResult(testResult)
       if (showToast) {
-        if (result.hasEvaluableConditions) {
-          toast.success(result.matched ? "Điều kiện đang thỏa mãn" : "Điều kiện chưa thỏa mãn")
+        if (testResult.hasEvaluableConditions) {
+          toast.success(testResult.matched ? "Điều kiện đang thỏa mãn" : "Điều kiện chưa thỏa mãn")
         } else {
           toast.info("Không có điều kiện hợp lệ để kiểm thử")
         }
       }
-      return result
+      return testResult
     } catch (error) {
       console.error("Lỗi kiểm thử điều kiện:", error)
       if (showToast) {
@@ -276,14 +266,8 @@ export function AutomationDialog({
     )
     if (actionsToRun.length > 0) {
       try {
-        const json = await apiClient<{ success: boolean }>(
-          "/api/automations/actions/execute",
-          {
-            method: "POST",
-            body: JSON.stringify({ actions: actionsToRun }),
-          }
-        )
-        if (json.success) {
+        const result = await executeActionsAction(actionsToRun)
+        if (result.success) {
           toast.success(`Đã thực thi ${actionsToRun.length} hành động thành công`)
         } else {
           toast.error("Thực thi các hành động thất bại")

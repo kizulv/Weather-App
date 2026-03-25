@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { loginAction } from "@/features/auth/auth.actions";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -37,23 +38,14 @@ export default function LoginPage() {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      const result = await loginAction(data);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Đăng nhập thất bại");
+      if (result.success) {
+        router.push(APP_ROUTES.defaults.authenticated);
+        router.refresh();
+      } else {
+        setErrorMsg(result.message || "Đăng nhập thất bại");
       }
-
-      router.push(APP_ROUTES.defaults.authenticated);
-      router.refresh();
-      
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Đã có lỗi xảy ra";
       setErrorMsg(message);

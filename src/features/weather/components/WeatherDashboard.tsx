@@ -3,7 +3,15 @@
 import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { apiClient } from "@/lib/api-client";
+import { 
+  getAutomationsAction, 
+  createAutomationAction, 
+  updateAutomationAction, 
+  deleteAutomationAction, 
+  getAutomationLogsAction
+} from "@/features/automation/automation.actions";
+import { getHADevicesAction } from "@/features/setting/home-assistant.actions";
+import { getWeatherDataAction } from "@/features/weather/weather.actions";
 
 const WeatherChart = dynamic(
   () => import("./WeatherChart").then((mod) => mod.WeatherChart),
@@ -40,55 +48,91 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
 
   // Automation states — sử dụng initial data từ server nếu có
   const [automations, setAutomations] = useState<Automation[]>(initialAutomations ?? []);
+  const [automationLogs, setAutomationLogs] = useState<Record<string, { lastRan?: string; loading: boolean; error?: string }>>({});
   const [devices, setDevices] = useState<Device[]>(initialDevices ?? []);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedAutomation, setSelectedAutomation] = useState<Automation | null>(null);
   const [dialogKey, setDialogKey] = useState(0);
 
-  const fetchAutomations = useCallback(async () => {
+  const fetchAutomationLogs = useCallback(async (automationIds: string[]) => {
+    // Khởi tạo trạng thái loading cho các kịch bản mới
+    setAutomationLogs(prev => {
+      const next = { ...prev };
+      automationIds.forEach(id => {
+        if (!next[id]) next[id] = { loading: true };
+        else next[id] = { ...next[id], loading: true, error: undefined };
+      });
+      return next;
+    });
+
     try {
-      const json = await apiClient<{ success: boolean; data: Automation[] }>("/api/automations");
-      if (json.success) setAutomations(json.data);
-    } catch (err) {
-      console.error("Lỗi fetch automations:", err);
+      const results = await Promise.all(
+        automationIds.map(async (id) => {
+          const res = await getAutomationLogsAction(id, 1);
+          return { id, res };
+        })
+      );
+
+      setAutomationLogs(prev => {
+        const next = { ...prev };
+        results.forEach(({ id, res }) => {
+          if (res.success && Array.isArray(res.data) && res.data.length > 0) {
+            const logs = res.data as Array<{ created_at?: string }>;
+            next[id] = { lastRan: logs[0]?.created_at, loading: false };
+          } else {
+            next[id] = { ...next[id], loading: false, error: res.success ? undefined : (res.message || "Lỗi") };
+          }
+        });
+        return next;
+      });
+    } catch (error) {
+      console.error("Lỗi fetch logs:", error);
     }
   }, []);
 
-  const fetchDevices = useCallback(async () => {
-    try {
-      const json = await apiClient<{ success: boolean; data: Device[] }>("/api/home-assistant/devices");
-      if (json.success) setDevices(json.data);
-    } catch (err) {
-      console.error("Lỗi fetch devices:", err);
+  const fetchAutomations = useCallback(async () => {
+    const result = await getAutomationsAction();
+    if (result.success) {
+      const fetchedAutomations = result.data || [];
+      setAutomations(fetchedAutomations);
+      if (fetchedAutomations.length > 0) {
+        fetchAutomationLogs(fetchedAutomations.map(a => a._id));
+      }
     }
+  }, [fetchAutomationLogs]);
+
+  const fetchDevices = useCallback(async () => {
+    const result = await getHADevicesAction();
+    if (result.success) setDevices(result.data || []);
   }, []);
 
   useEffect(() => {
     const init = async () => {
       // Chỉ fetch nếu chưa có initial data từ server
-      if (!initialAutomations?.length) await fetchAutomations();
+      if (!initialAutomations?.length) {
+        await fetchAutomations();
+      } else {
+        // Nếu có initial data, vẫn fetch logs
+        fetchAutomationLogs(initialAutomations.map(a => a._id));
+      }
       if (!initialDevices?.length) await fetchDevices();
     };
     init();
-  }, [fetchAutomations, fetchDevices, initialAutomations, initialDevices]);
+  }, [fetchAutomations, fetchAutomationLogs, fetchDevices, initialAutomations, initialDevices]);
 
   const handleSaveAutomation = async (data: Partial<Automation>) => {
     try {
       const isEdit = !!selectedAutomation;
-      const url = isEdit ? `/api/automations/${selectedAutomation?._id}` : "/api/automations";
-      const method = isEdit ? "PUT" : "POST";
+      const result = isEdit 
+        ? await updateAutomationAction(selectedAutomation?._id as string, data)
+        : await createAutomationAction(data);
 
-      const json = await apiClient<{ success: boolean; message?: string }>(url, {
-        method,
-        body: JSON.stringify(data),
-      });
-
-      if (json.success) {
+      if (result.success) {
         toast.success(isEdit ? "Cập nhật thành công" : "Tạo mới thành công");
         setIsDialogOpen(false);
         fetchAutomations();
       } else {
-        toast.error(json.message || "Có lỗi xảy ra");
+        toast.error(result.message || "Có lỗi xảy ra");
       }
     } catch {
       toast.error("Lỗi kết nối");
@@ -105,15 +149,12 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
     setAutomations(prev => prev.map(a => a._id === id ? { ...a, enabled } : a));
 
     try {
-      const json = await apiClient<{ success: boolean; message?: string }>(`/api/automations/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ ...currentAutomation, enabled }),
-      });
+      const result = await updateAutomationAction(id, { ...currentAutomation, enabled });
       
-      if (!json.success) {
+      if (!result.success) {
         // Hoàn tác nếu server báo lỗi
         setAutomations(previousAutomations);
-        toast.error(json.message || "Không thể cập nhật trạng thái");
+        toast.error(result.message || "Không thể cập nhật trạng thái");
       }
     } catch (err) {
       // Hoàn tác nếu lỗi kết nối
@@ -126,8 +167,8 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
   const handleDeleteAutomation = async (id: string) => {
     if (!confirm("Bạn có chắc chắn muốn xóa tự động hóa này?")) return;
     try {
-      const json = await apiClient<{ success: boolean }> (`/api/automations/${id}`, { method: "DELETE" });
-      if (json.success) {
+      const result = await deleteAutomationAction(id);
+      if (result.success) {
         toast.success("Đã xóa");
         fetchAutomations();
       }
@@ -136,42 +177,18 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
     }
   };
 
-  const handleRunAutomation = async (id: string) => {
-    try {
-      const json = await apiClient<{ success: boolean; message?: string }>(`/api/automations/${id}/execute`, {
-        method: "POST"
-      });
-      if (json.success) {
-        toast.success("Đã kích hoạt kịch bản");
-        fetchAutomations(); // Refresh list to get new last_ran_at
-      } else {
-        toast.error(json.message || "Lỗi khi thực thi");
-      }
-    } catch (error) {
-      console.error("Lỗi chạy kịch bản:", error);
-      toast.error("Lỗi kết nối");
-    }
-  };
 
   // Hàm refresh dữ liệu từ API (chỉ dùng cho auto-refresh sau lần đầu)
   const refreshWeatherData = useCallback(async () => {
     try {
-      const response = await fetch(`/api/weather?t=${Date.now()}`, { 
-        cache: "no-store" 
-      });
+      const result = await getWeatherDataAction();
       
-      if (response.status === 401) {
+      if (result.success && result.data) {
+        setData(result.data.realtime);
+        setPast24h(result.data.past24h);
+        setDaily(result.data.daily);
+      } else if (result.message === "Unauthorized") {
         window.location.href = "/login";
-        return;
-      }
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result && result.success) {
-          setData(result.realtime);
-          setPast24h(result.past24h);
-          setDaily(result.daily);
-        }
       }
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu thời tiết:", error);
@@ -270,10 +287,9 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
                   actions_when_matched={automation.actions_when_matched}
                   actions_when_unmatched={automation.actions_when_unmatched}
                   devices={devices}
-                  last_ran_at={automation.last_ran_at}
                   onToggle={handleToggleAutomation}
                   onDelete={handleDeleteAutomation}
-                  onRun={handleRunAutomation}
+                  logData={automationLogs[automation._id]}
                   onClick={() => {
                     setSelectedAutomation(automation);
                     setDialogKey(k => k + 1);

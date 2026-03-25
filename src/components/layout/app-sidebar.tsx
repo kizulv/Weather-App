@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { logoutAction } from "@/features/auth/auth.actions"
 import {
   Bell,
   LogOut,
@@ -64,18 +65,16 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-      })
+      const result = await logoutAction();
 
-      if (response.ok) {
-        router.push("/login")
-        router.refresh()
+      if (result.success) {
+        router.push("/login");
+        router.refresh();
       }
     } catch (error) {
-      console.error("Lỗi khi đăng xuất:", error)
+      console.error("Lỗi khi đăng xuất:", error);
     }
-  }
+  };
 
   return (
 <Sidebar collapsible="icon" className="z-40">

@@ -6,7 +6,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Action, Device } from "@/features/automation/types/automation"
-import { apiClient } from "@/lib/api-client"
+import { executeActionsAction, ExecutionResult } from "@/features/automation/automation.actions"
 import { toast } from "sonner"
 
 interface NotificationProps {
@@ -43,20 +43,15 @@ export function ActionNotification({
     setIsLoading(true)
     setStatus("idle")
     try {
-      const json = await apiClient<{ success: boolean; data: { service: string, status: string }[] }>(
-        "/api/automations/actions/execute",
-        {
-          method: "POST",
-          body: JSON.stringify({ actions: [action] }),
-        }
-      )
+      const result = await executeActionsAction([action])
+      const executionData = result.data as ExecutionResult[]
 
-      if (json.success && json.data?.[0]?.status === "success") {
+      if (result.success && Array.isArray(executionData) && executionData[0]?.status === "success") {
         setStatus("success")
         toast.success("Đã gửi thông báo thử nghiệm")
       } else {
         setStatus("error")
-        toast.error("Gửi thông báo thất bại")
+        toast.error(result.message || "Gửi thông báo thất bại")
       }
     } catch (error) {
       console.error("Lỗi thực thi:", error)

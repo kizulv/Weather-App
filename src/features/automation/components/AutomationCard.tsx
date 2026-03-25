@@ -4,7 +4,6 @@ import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { Zap, Clock, Trash2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { Action, Device } from "@/features/automation/types/automation";
 import { resolveAutomationActionBranches } from "../utils/action-branches";
 
@@ -19,11 +18,10 @@ interface AutomationCardProps {
   actions_when_matched?: Action[];
   actions_when_unmatched?: Action[];
   devices?: Device[];
-  last_ran_at?: string;
   onToggle: (id: string, enabled: boolean) => void;
   onClick: () => void;
   onDelete: (id: string) => void;
-  onRun: (id: string) => Promise<void>;
+  logData?: { lastRan?: string; loading: boolean; error?: string };
 }
 
 export function AutomationCard({
@@ -35,12 +33,13 @@ export function AutomationCard({
   actions_when_matched,
   actions_when_unmatched,
   devices = [],
-  last_ran_at,
   onToggle,
   onClick,
   onDelete,
+  logData
 }: AutomationCardProps) {
-  const [] = useState(false);
+  // Derived state: Chú trọng vào thời gian từ log được truyền từ parent
+  const displayLastRan = logData?.lastRan;
 
 
   const handleToggle = async (checked: boolean) => {
@@ -150,13 +149,24 @@ export function AutomationCard({
       {/* Footer Area */}
       <div className="flex items-center justify-between border-t border-white/5 pt-4 relative z-10">
         <div className="flex items-center gap-2">
-          <div className={cn(
-            "h-1.5 w-1.5 rounded-full",
-            enabled ? "bg-emerald-500 animate-pulse" : "bg-white/20"
-          )} />
-          <span className="text-[10px] font-bold uppercase text-white/40">
-            {formatLastRan(last_ran_at)}
-          </span>
+          {logData?.loading ? (
+            <div className="h-2 w-16 bg-white/10 animate-pulse rounded-full" />
+          ) : logData?.error ? (
+            <div className="flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+              <span className="text-[10px] font-bold uppercase text-red-400/80">Lỗi tải log</span>
+            </div>
+          ) : (
+            <>
+              <div className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                enabled ? "bg-emerald-500 animate-pulse" : "bg-white/20"
+              )} />
+              <span className="text-[10px] font-bold uppercase text-white/40">
+                {formatLastRan(displayLastRan)}
+              </span>
+            </>
+          )}
         </div>
 
         {/* Action Buttons (Visible on hover) */}
