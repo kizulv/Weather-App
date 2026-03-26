@@ -206,7 +206,7 @@ export interface ConditionTestResult {
 }
 
 // --- Sub-components ---
-function ConditionTestResultDisplay({ result }: { result: ConditionTestResult, devices: Device[] }) {
+export function ConditionTestResultDisplay({ result }: { result: ConditionTestResult, devices?: Device[] }) {
   return (
     <div className="space-y-2 rounded-sm border border-white/10 bg-slate-950/30 p-3">
       <div className="flex items-center justify-between">
@@ -216,28 +216,28 @@ function ConditionTestResultDisplay({ result }: { result: ConditionTestResult, d
         </span>
       </div>
       
-      {result.details?.map((item: ConditionTestItem, idx: number) => {
-        const cleanTarget = item.target?.replace(/(bật|tắt)\s+\1/gi, "$1")
-        return (
+        {result.details?.map((item: ConditionTestItem, idx: number) => {
+          const cleanTarget = item.target?.replace(/(bật|tắt)\s+\1/gi, "$1")
+          return (
           <div key={`${item.type}-${idx}`} className="rounded-sm border border-white/10 bg-slate-900/40 p-2.5">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-white">{item.condition}</p>
               <span className={cn("text-[10px] font-bold uppercase tracking-wider", item.passed ? "text-emerald-300" : "text-rose-300")}>{item.passed ? "Đạt" : "Không đạt"}</span>
-            </div>
+              </div>
             <p className="mt-1 text-[11px] text-white/60">Thực tế: <span className="text-white">{item.actual}</span> | Mục tiêu: <span className="text-white">{cleanTarget}</span></p>
             <p className="text-[11px] text-white/60">
               Thời gian: {item.time_range} 
               {item.sample_count !== undefined && ` | Số mẫu: ${item.sample_count}`}
-              {item.last_occurrence && (
+                  {item.last_occurrence && (
                 <span className="opacity-80">
                   {` | Đã ${cleanTarget?.toLowerCase().includes("tắt") ? "tắt" : "bật"} lúc: ${item.last_occurrence}`}
-                </span>
-              )}
-            </p>
-          </div>
-        )
-      })}
-    </div>
+                    </span>
+                  )}
+                </p>
+              </div>
+          )
+        })}
+      </div>
   )
 }
 

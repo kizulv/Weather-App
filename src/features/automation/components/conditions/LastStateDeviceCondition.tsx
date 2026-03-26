@@ -125,7 +125,7 @@ export function ConditionLastStateDevice({
             value={value.match}
             onValueChange={(val) => handleUpdate({ match: val as "is" | "is_not" })}
           >
-            <SelectTrigger className="flex flex-1 w-24 sm:w-28 bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-xs font-medium">
+            <SelectTrigger className="flex flex-1 w-20 sm:w-20 bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-xs font-medium">
               <SelectValue placeholder="So khớp" />
             </SelectTrigger>
             <SelectContent className="bg-[#1e293b] border-slate-700/50 text-white rounded-sm text-xs">
@@ -138,12 +138,12 @@ export function ConditionLastStateDevice({
             value={value.state}
             onValueChange={(val) => handleUpdate({ state: val })}
           >
-            <SelectTrigger className="w-16 sm:w-20 bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-xs font-medium">
+            <SelectTrigger className="w-20 sm:w-28 bg-slate-800/40 border-slate-700/50 rounded-sm h-9 text-xs font-medium">
               <SelectValue placeholder="Trạng thái" />
             </SelectTrigger>
             <SelectContent className="bg-[#1e293b] border-slate-700/50 text-white rounded-sm text-xs">
-              <SelectItem value="on" className="text-xs">Bật</SelectItem>
-              <SelectItem value="off" className="text-xs">Tắt</SelectItem>
+              <SelectItem value="on" className="text-xs">Bật trong</SelectItem>
+              <SelectItem value="off" className="text-xs">Tắt trong</SelectItem>
             </SelectContent>
           </Select>
           {/* Thời gian */}

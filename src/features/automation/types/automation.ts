@@ -58,3 +58,13 @@ export interface Automation {
   created_at: string
   updated_at: string
 }
+
+export interface AutomationLog {
+  _id: string
+  automation_id: string
+  executed_at: string
+  matched: boolean
+  details: unknown // ConditionTestResult
+  actions_results: Action[]
+  error?: string
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Loader2, Pencil, Play, Zap } from "lucide-react"
+import { AutomationLogList } from "./shared/AutomationLogList"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -33,9 +34,9 @@ import {
 import { AutomationActionsSection } from "./actions/AutomationActionsSection"
 import { AutomationConditionsSection } from "./conditions/AutomationConditionsSection"
 import { AutomationTriggerSection } from "./triggers/AutomationTriggerSection"
-import { 
-  checkConditionsAction, 
-  executeActionsAction 
+import {
+  checkConditionsAction,
+  executeAutomationAction,
 } from "@/features/automation/automation.actions"
 import { getHADevicesAction } from "@/features/setting/home-assistant.actions"
 
@@ -92,6 +93,8 @@ export function AutomationDialog({
   const [isTestingConditions, setIsTestingConditions] = useState(false)
   const [conditionTestResult, setConditionTestResult] = useState<ConditionTestResult | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [refreshLogs, setRefreshLogs] = useState(0)
+
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -267,9 +270,14 @@ export function AutomationDialog({
     )
     if (actionsToRun.length > 0) {
       try {
-        const result = await executeActionsAction(actionsToRun)
+        if (!automation?._id) {
+          toast.error("Không thể chạy thử tự động hóa chưa được lưu.")
+          return
+        }
+        const result = await executeAutomationAction(automation._id)
         if (result.success) {
-          toast.success(`Đã thực thi ${actionsToRun.length} hành động thành công`)
+          toast.success(result.message)
+          setRefreshLogs(prev => prev + 1)
         } else {
           toast.error("Thực thi các hành động thất bại")
         }
@@ -420,6 +428,14 @@ export function AutomationDialog({
             onRemoveAction={(index) => removeAction("unmatched", index)}
             onUpdateAction={(index, patch) => updateAction("unmatched", index, patch)}
           />
+
+          {automation?._id && (
+            <AutomationLogList 
+              automationId={automation._id} 
+              devices={devices}
+              refreshTrigger={refreshLogs}
+            />
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-2 border-t border-white/5 px-6 py-3">
