@@ -10,12 +10,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { Condition, ConditionMode, ConditionOperator, ConditionType, Device, LastStateDeviceConditionValue, NumericWindowConditionValue } from "@/features/automation/types/automation"
+import { Condition, ConditionMode, ConditionOperator, ConditionType, Device, LastStateDeviceConditionValue, NumericWindowConditionValue, PersonIsHomeConditionValue } from "@/features/automation/types/automation"
 
 import { ConditionAverageTemperature } from "./ConditionAverageTemperature"
 import { ConditionSunshineHours } from "./ConditionSunshineHours"
 import { ConditionRain } from "./ConditionRain"
 import { ConditionLastStateDevice } from "./LastStateDeviceCondition"
+import { ConditionPersonLocation } from "./ConditionPersonLocation"
 
 // --- Constants ---
 export const MAX_CONDITION_HOURS = 24
@@ -65,6 +66,14 @@ export const CONDITION_CONFIG: Record<
     thresholdStep: "1",
     thresholdSuffix: "",
   },
+  person_is_home: {
+    label: "Người dùng ở nhà",
+    defaultHours: 0,
+    defaultThreshold: 0,
+    thresholdLabel: "",
+    thresholdStep: "1",
+    thresholdSuffix: "",
+  },
 }
 
 export const CONDITION_MODE_OPTIONS: Array<{ value: ConditionMode; label: string }> = [
@@ -99,6 +108,7 @@ export function resolveConditionType(type: unknown): ConditionType {
   if (type === "sunshine_hours") return "sunshine_hours"
   if (type === "rain_minutes") return "rain_minutes"
   if (type === "last_state_device") return "last_state_device"
+  if (type === "person_is_home") return "person_is_home"
   return "average_temperature"
 }
 
@@ -107,7 +117,7 @@ export function resolveOperator(operator: unknown): ConditionOperator {
   return ">="
 }
 
-export function getDefaultConditionValue(type: ConditionType): NumericWindowConditionValue | LastStateDeviceConditionValue {
+export function getDefaultConditionValue(type: ConditionType): NumericWindowConditionValue | LastStateDeviceConditionValue | PersonIsHomeConditionValue {
   const config = CONDITION_CONFIG[type]
   if (type === "last_state_device") {
     return {
@@ -115,6 +125,12 @@ export function getDefaultConditionValue(type: ConditionType): NumericWindowCond
       state: "on",
       match: "is_not",
       minutes: 120,
+    }
+  }
+  if (type === "person_is_home") {
+    return {
+      entity_id: "",
+      state: "home",
     }
   }
   return {
@@ -135,7 +151,7 @@ export function normalizeCondition(condition?: Condition): Condition {
 
   if (type === "last_state_device") {
     const v = rawValue as Partial<LastStateDeviceConditionValue>
-    const d = defaultValue as LastStateDeviceConditionValue
+    const d = defaultValue as unknown as LastStateDeviceConditionValue
     return {
       type,
       value: {
@@ -147,8 +163,20 @@ export function normalizeCondition(condition?: Condition): Condition {
     }
   }
 
+  if (type === "person_is_home") {
+    const v = rawValue as Partial<PersonIsHomeConditionValue>
+    const d = defaultValue as unknown as PersonIsHomeConditionValue
+    return {
+      type,
+      value: {
+        entity_id: v.entity_id || d.entity_id,
+        state: v.state || d.state,
+      },
+    }
+  }
+
   const v = rawValue as Partial<NumericWindowConditionValue>
-  const d = defaultValue as NumericWindowConditionValue
+  const d = defaultValue as unknown as NumericWindowConditionValue
   return {
     type,
     value: {
@@ -320,6 +348,17 @@ export function AutomationConditionsSection({
             if (type === "last_state_device") {
               return (
                 <ConditionLastStateDevice
+                  key={idx}
+                  condition={condition}
+                  devices={devices}
+                  onRemove={() => onRemoveCondition(idx)}
+                  onUpdate={(next: Condition) => onUpdateCondition(idx, next)}
+                />
+              )
+            }
+            if (type === "person_is_home") {
+              return (
+                <ConditionPersonLocation
                   key={idx}
                   condition={condition}
                   devices={devices}

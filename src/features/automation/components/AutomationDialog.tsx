@@ -21,6 +21,7 @@ import {
   Device,
   LastStateDeviceConditionValue,
   NumericWindowConditionValue,
+  PersonIsHomeConditionValue,
   Trigger,
 } from "@/features/automation/types/automation"
 
@@ -296,6 +297,10 @@ export function AutomationDialog({
       if (condition.type === "last_state_device") {
         const value = condition.value as LastStateDeviceConditionValue
         return !value.entity_id || !Number.isFinite(value.minutes)
+      }
+      if (condition.type === "person_is_home") {
+        const value = condition.value as PersonIsHomeConditionValue
+        return !value.entity_id || !value.state
       }
       const value = condition.value as NumericWindowConditionValue
       return !Number.isFinite(value.hours) || !Number.isFinite(value.threshold)

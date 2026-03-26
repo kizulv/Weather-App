@@ -12,7 +12,7 @@ export interface Action {
 
 export type ConditionOperator = ">=" | "=" | "<="
 
-export type ConditionType = "average_temperature" | "sunshine_hours" | "rain_minutes" | "last_state_device"
+export type ConditionType = "average_temperature" | "sunshine_hours" | "rain_minutes" | "last_state_device" | "person_is_home"
 
 export interface NumericWindowConditionValue {
   hours: number
@@ -27,9 +27,14 @@ export interface LastStateDeviceConditionValue {
   minutes: number
 }
 
+export interface PersonIsHomeConditionValue {
+  entity_id: string
+  state: "home" | "not_home"
+}
+
 export interface Condition {
   type: ConditionType | string
-  value: NumericWindowConditionValue | LastStateDeviceConditionValue | unknown // Metadata cho condition có thể linh hoạt
+  value: NumericWindowConditionValue | LastStateDeviceConditionValue | PersonIsHomeConditionValue | unknown // Metadata cho condition có thể linh hoạt
 }
 
 export interface Device {
