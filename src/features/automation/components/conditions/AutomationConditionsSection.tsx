@@ -208,7 +208,7 @@ export interface ConditionTestResult {
 // --- Sub-components ---
 export function ConditionTestResultDisplay({ result }: { result: ConditionTestResult, devices?: Device[] }) {
   return (
-    <div className="space-y-2 rounded-sm border border-white/10 bg-slate-950/30 p-3">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">Kết quả kiểm thử</div>
         <span className={cn("rounded-sm px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", result.matched ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300")}>
@@ -221,13 +221,22 @@ export function ConditionTestResultDisplay({ result }: { result: ConditionTestRe
           return (
           <div key={`${item.type}-${idx}`} className="rounded-sm border border-white/10 bg-slate-900/40 p-2.5">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold text-white">{item.condition}</p>
+              <p className="text-xs font-semibold text-white mb-0!">{item.condition}</p>
               <span className={cn("text-[10px] font-bold uppercase tracking-wider", item.passed ? "text-emerald-300" : "text-rose-300")}>{item.passed ? "Đạt" : "Không đạt"}</span>
               </div>
-            <p className="mt-1 text-[11px] text-white/60">Thực tế: <span className="text-white">{item.actual}</span> | Mục tiêu: <span className="text-white">{cleanTarget}</span></p>
+            {item.type !== "last_state_device" ? (
+              <p className="mt-1 mb-0! text-[11px] text-white/60">
+                Thực tế: <span className="text-white">{item.actual}</span> | 
+                Mục tiêu: <span className="text-white">{cleanTarget}</span>
+              </p>
+            ) : (
+              <p className="mt-1 mb-0! text-[11px] text-white/60">
+                Mục tiêu: <span className="text-white">{cleanTarget}</span>
+              </p>
+            )}
             <p className="text-[11px] text-white/60">
               Thời gian: {item.time_range} 
-              {item.sample_count !== undefined && ` | Số mẫu: ${item.sample_count}`}
+              {(item.sample_count !== undefined && item.sample_count !== null) && ` | Số mẫu: ${item.sample_count}`}
                   {item.last_occurrence && (
                 <span className="opacity-80">
                   {` | Đã ${cleanTarget?.toLowerCase().includes("tắt") ? "tắt" : "bật"} lúc: ${item.last_occurrence}`}

@@ -9,4 +9,5 @@ export const serviceLabels: Record<string, { label: string; color: string }> = {
   "automation.turn_on": { label: "Bật", color: "text-emerald-400" },
   "automation.turn_off": { label: "Tắt", color: "text-red-400" },
   "automation.toggle": { label: "Đảo", color: "text-purple-400" },
+  "notify.notify": { label: "Gửi thông báo", color: "text-sky-400" },
 };
