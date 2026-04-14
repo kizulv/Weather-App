@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Bell, Check, CheckCircle2, ChevronDown, Loader2, Play, Trash2, XCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Action, Device } from "@/features/automation/types/automation"
 import { executeActionsAction, ExecutionResult } from "@/features/automation/automation.actions"
+import { getHANotifyDevicesAction } from "@/features/setting/home-assistant.actions"
 import { toast } from "sonner"
 
 interface NotificationProps {
@@ -25,10 +26,30 @@ export function ActionNotification({
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
+  const [notifyDevices, setNotifyDevices] = useState<Device[]>([])
 
-  // Lọc danh sách dịch vụ thông báo (notify.*)
-  const notifyDevices = devices.filter(d => d.entity_id.startsWith("notify."))
-  const currentDevice = devices.find(d => d.entity_id === action.entity_id)
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchNotifyDevices = async () => {
+      const result = await getHANotifyDevicesAction()
+      if (!isMounted || !result.success) return
+
+      setNotifyDevices(result.data || [])
+    }
+
+    fetchNotifyDevices()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const fallbackNotifyDevices = devices.filter((device) => device.entity_id.startsWith("notify."))
+  const selectableNotifyDevices = [...notifyDevices, ...fallbackNotifyDevices].filter(
+    (device, index, list) => list.findIndex((item) => item.entity_id === device.entity_id) === index
+  )
+  const currentDevice = selectableNotifyDevices.find((device) => device.entity_id === action.entity_id)
 
   const handleRun = async () => {
     if (!action.entity_id && !action.service.startsWith("notify.")) {
@@ -130,7 +151,7 @@ export function ActionNotification({
                         <span className="text-[10px] text-white/40 font-mono">notify.notify</span>
                       </CommandItem>
 
-                      {notifyDevices.map((device) => (
+                      {selectableNotifyDevices.map((device) => (
                         <CommandItem
                           key={device.entity_id}
                           value={`${device.name} ${device.entity_id}`}

@@ -115,6 +115,24 @@ export async function getHADevicesAction() {
 }
 
 /**
+ * Lấy danh sách thiết bị nhận thông báo Home Assistant
+ */
+export async function getHANotifyDevicesAction() {
+  const token = await getAuthToken()
+  if (!token) return { success: false, message: "Unauthorized" }
+
+  try {
+    const data = await apiClient<{ success: boolean; data?: Device[] }>("/home-assistant/notify-devices", {
+      method: "GET"
+    }, token)
+    return { success: true, data: data.data || [] }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Lỗi hệ thống"
+    return { success: false, message }
+  }
+}
+
+/**
  * Proxy điều khiển thiết bị Home Assistant
  */
 export async function proxyHAAction(payload: unknown) {
