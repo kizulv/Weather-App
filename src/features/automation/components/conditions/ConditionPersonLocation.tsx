@@ -32,8 +32,10 @@ export function ConditionPersonLocation({
   const [open, setOpen] = useState(false)
   const value = condition.value as PersonIsHomeConditionValue
 
-  // Lọc các thực thể person.*
-  const personDevices = devices.filter(d => d.entity_id.startsWith("person."))
+  // Lọc các thực thể person.* và device_tracker.*
+  const selectableDevices = devices.filter(
+    d => d.entity_id.startsWith("person.") || d.entity_id.startsWith("device_tracker.")
+  )
 
   const handleUpdate = (patch: Partial<PersonIsHomeConditionValue>) => {
     onUpdate({ ...condition, value: { ...value, ...patch } })
@@ -65,8 +67,8 @@ export function ConditionPersonLocation({
               >
                 <span className="truncate">
                   {value.entity_id
-                    ? (personDevices.find(d => d.entity_id === value.entity_id)?.name || value.entity_id)
-                    : "Chọn người dùng..."}
+                    ? (selectableDevices.find(d => d.entity_id === value.entity_id)?.name || value.entity_id)
+                    : "Chọn người dùng hoặc thiết bị..."}
                 </span>
                 <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
               </Button>
@@ -76,11 +78,11 @@ export function ConditionPersonLocation({
               onWheel={(e) => e.stopPropagation()}
             >
               <Command className="bg-[#1e293b] text-white">
-                <CommandInput placeholder="Tìm người dùng..." className="text-white border-slate-800/30 text-xs" />
+                <CommandInput placeholder="Tìm người dùng hoặc thiết bị..." className="text-white border-slate-800/30 text-xs" />
                 <CommandList className="max-h-56 overflow-y-auto">
                   <CommandEmpty>Không tìm thấy.</CommandEmpty>
                   <CommandGroup>
-                    {personDevices.map((device) => (
+                    {selectableDevices.map((device) => (
                       <CommandItem
                         key={device.entity_id}
                         value={`${device.name} ${device.entity_id}`}
