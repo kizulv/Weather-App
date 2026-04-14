@@ -16,10 +16,16 @@ import { serviceLabels } from "./service-labels"
 interface AutomationLogListProps {
   automationId: string
   devices: Device[]
+  limit?: number
   refreshTrigger?: number
 }
 
-export function AutomationLogList({ automationId, devices, refreshTrigger }: AutomationLogListProps) {
+export function AutomationLogList({
+  automationId,
+  devices,
+  limit = 5,
+  refreshTrigger,
+}: AutomationLogListProps) {
   const [logs, setLogs] = useState<AutomationLog[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,7 +34,7 @@ export function AutomationLogList({ automationId, devices, refreshTrigger }: Aut
     if (!automationId) return
     setLoading(true)
     try {
-      const result = await getAutomationLogsAction(automationId, 5)
+      const result = await getAutomationLogsAction(automationId, limit)
       if (result.success) {
         setLogs(result.data as AutomationLog[])
       } else {
@@ -39,11 +45,13 @@ export function AutomationLogList({ automationId, devices, refreshTrigger }: Aut
     } finally {
       setLoading(false)
     }
-  }, [automationId])
+  }, [automationId, limit])
 
   useEffect(() => {
     fetchLogs()
   }, [fetchLogs, refreshTrigger])
+
+  const visibleLogs = logs.slice(0, limit)
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -86,7 +94,7 @@ export function AutomationLogList({ automationId, devices, refreshTrigger }: Aut
         </h3>
       </div>
 
-      {logs.length === 0 ? (
+      {visibleLogs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 px-4 rounded-sm border border-dashed border-white/10 bg-white/2">
           <AlertCircle className="h-5 w-5 text-white/20 mb-2" />
           <p className="text-xs text-white/30 italic">Chưa có dữ liệu thực thi cho kịch bản này</p>
@@ -94,7 +102,7 @@ export function AutomationLogList({ automationId, devices, refreshTrigger }: Aut
         </div>
       ) : (
         <Accordion type="single" collapsible className="w-full space-y-2">
-        {logs.map((log) => (
+        {visibleLogs.map((log) => (
           <AccordionItem
             key={log._id}
             value={log._id}

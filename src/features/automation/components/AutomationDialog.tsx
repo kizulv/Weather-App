@@ -433,6 +433,7 @@ export function AutomationDialog({
             <AutomationLogList 
               automationId={automation._id} 
               devices={devices}
+              limit={5}
               refreshTrigger={refreshLogs}
             />
           )}
