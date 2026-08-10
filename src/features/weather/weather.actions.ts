@@ -25,24 +25,27 @@ export async function getWeatherDataAction() {
   try {
     const data = await fetchWeatherData(token);
     
-    if (!data) {
-      return { 
-        success: false, 
-        message: "Không tìm thấy dữ liệu thời tiết" 
-      };
-    }
-
     return { 
       success: true, 
-      data 
+      data: data || {
+        success: true,
+        realtime: null,
+        hourly: [],
+        daily: [],
+        past24h: [],
+      }
     };
   } catch (error) {
-    console.error("Lỗi khi fetch dữ liệu thời tiết:", error);
-    const message = error instanceof Error ? error.message : "Lỗi hệ thống";
+    console.warn("Lỗi khi kết nối dữ liệu thời tiết:", error);
     return { 
-      success: false, 
-      message: "Lỗi khi kết nối tới máy chủ dữ liệu ngoại",
-      error: message
+      success: true, 
+      data: {
+        success: true,
+        realtime: null,
+        hourly: [],
+        daily: [],
+        past24h: [],
+      }
     };
   }
 }

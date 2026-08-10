@@ -26,7 +26,7 @@ import { DailyForecast } from "./DailyForecast";
 import { HourlyForecast } from "./HourlyForecast";
 import { AutomationCard } from "@/features/automation/components/AutomationCard";
 import { AutomationDialog } from "@/features/automation/components/AutomationDialog";
-import { Plus } from "lucide-react";
+import { Plus, CloudOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Automation, Device } from "@/features/automation/types/automation";
@@ -45,6 +45,7 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
   const [data, setData] = useState<RealtimeWeather | null>(initialData?.realtime ?? null);
   const [past24h, setPast24h] = useState<HourlyWeather[]>(initialData?.past24h ?? []);
   const [daily, setDaily] = useState<DailyWeather[]>(initialData?.daily ?? []);
+  const [isLoading, setIsLoading] = useState<boolean>(!initialData);
 
   // Automation states — sử dụng initial data từ server nếu có
   const [automations, setAutomations] = useState<Automation[]>(initialAutomations ?? []);
@@ -185,13 +186,18 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
       
       if (result.success && result.data) {
         setData(result.data.realtime);
-        setPast24h(result.data.past24h);
-        setDaily(result.data.daily);
+        setPast24h(result.data.past24h || []);
+        setDaily(result.data.daily || []);
       } else if (result.message === "Unauthorized") {
         window.location.href = "/login";
+      } else {
+        setData(null);
       }
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu thời tiết:", error);
+      setData(null);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -215,7 +221,7 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
     }
   }, [initialData, refreshWeatherData]);
 
-  if (!data) {
+  if (isLoading) {
     return (
       <div className="flex-1 min-h-svh flex items-center justify-center bg-[#020617]">
         <div className="text-center space-y-4">
@@ -238,21 +244,43 @@ export function WeatherDashboard({ initialData, initialAutomations, initialDevic
         </div>
 
         <main className="flex-1 p-4 md:p-8 md:pt-0 space-y-8 max-w-8xl mx-auto w-full pt-0 min-w-0">
-          {/* Combined Real-time Weather Card */}
-          {data && <CurrentWeatherCard data={data} />}
+          {data ? (
+            <>
+              {/* Combined Real-time Weather Card */}
+              <CurrentWeatherCard data={data} />
 
-          {/* Chart Section - Flex Layout for dynamic width */}
-          <section className="flex flex-col lg:flex-row gap-8 items-stretch">
-            <div className="flex-1 flex flex-col gap-8 min-w-0">
-              <WeatherChart data={past24h} />
-              <div className="flex-1">
-                <HourlyForecast data={past24h} />
+              {/* Chart Section - Flex Layout for dynamic width */}
+              <section className="flex flex-col lg:flex-row gap-8 items-stretch">
+                <div className="flex-1 flex flex-col gap-8 min-w-0">
+                  <WeatherChart data={past24h} />
+                  <div className="flex-1">
+                    <HourlyForecast data={past24h} />
+                  </div>
+                </div>
+                <div className="flex flex-col w-full lg:w-95 lg:min-w-95 shrink-0">
+                  <DailyForecast data={daily} />
+                </div>
+              </section>
+            </>
+          ) : (
+            <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 text-center flex flex-col items-center justify-center gap-4 my-4">
+              <div className="p-4 rounded-full bg-white/5 border border-white/10">
+                <CloudOff className="h-8 w-8 text-white/50" />
               </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-white">Chưa có dữ liệu thời tiết</h3>
+                <p className="text-xs text-white/50 max-w-md mx-auto">
+                  Máy chủ API hiện chưa nhận được dữ liệu từ trạm đo thời tiết. Hệ thống sẽ tự động hiển thị khi có dữ liệu mới.
+                </p>
+              </div>
+              <Button 
+                onClick={refreshWeatherData}
+                className="rounded-sm px-4 py-2 text-xs bg-white/10 hover:bg-white/20 text-white border border-white/10 transition-colors duration-200"
+              >
+                Thử lại ngay
+              </Button>
             </div>
-            <div className="flex flex-col w-full lg:w-95 lg:min-w-95 shrink-0">
-              <DailyForecast data={daily} />
-            </div>
-          </section>
+          )}
 
           {/* Automation Section */}
           <section className="space-y-6">

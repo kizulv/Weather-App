@@ -29,27 +29,17 @@ export class AuthService {
         throw new Error("Không nhận được token từ máy chủ");
       }
 
-      if (!data.user) {
-        console.error("Login successful but 'user' object is missing in response!");
-        const dataPayload = data.data as Record<string, unknown> | undefined;
-        const userData = (dataPayload?.user as Record<string, unknown>) || dataPayload || {};
-        return {
-          user: {
-            id: String(userData.id || userData._id || "unknown"),
-            email: String(userData.email || input.email),
-            name: String(userData.name || "User"),
-            role: String(userData.role || "VIEWER"),
-          },
-          token,
-        };
-      }
+      // Trích xuất thông tin user từ các cấu trúc response khác nhau của API
+      const userObj = data.user || data.data?.user;
+      const dataPayload = data.data as Record<string, unknown> | undefined;
+      const userData = (userObj as Record<string, unknown>) || dataPayload || {};
 
       return {
         user: {
-          id: data.user.id,
-          email: data.user.email,
-          name: data.user.name,
-          role: data.user.role || "VIEWER",
+          id: String(userData.id || userData._id || "unknown"),
+          email: String(userData.email || input.email),
+          name: String(userData.name || "User"),
+          role: String(userData.role || "VIEWER"),
         },
         token,
       };
